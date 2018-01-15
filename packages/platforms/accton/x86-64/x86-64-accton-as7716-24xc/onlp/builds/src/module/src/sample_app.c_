@@ -1,0 +1,3954 @@
+﻿/*!*********************************************************************
+ *	\file		sample_app.c
+ *	\brief		Sample application source file
+ *
+ *	$Date:: 2017-05-08 19:12:24#$
+ *	$Rev:: 494                  $
+ **********************************************************************/
+/*******************************************************************************
+ *  Copyright (c) 2016 - 2017 NTT Electronics Corporation.                     *
+ *                                                                             *
+ *  All Rights Reserved.                                                       *
+ *  No portions of this material may be reproduced in any form without         *
+ *  the written permission of:                                                 *
+ *      NTT Electronics Corporation                                            *
+ *                                                                             *
+ *  All information contained in this document is NTT Electronics Corporation  *
+ *  company private proprietary, and trade secret.                             *
+ *                                                                             *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS        *
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT          *
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR      *
+ *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT       *
+ *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,      *
+ *  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT           *
+ *  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,      *
+ *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY      *
+ *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT        *
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE      *
+ *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.       *
+ *                                                                             *
+ ******************************************************************************/
+/*
+ *	Include Files
+ */
+#include <stdio.h>
+#include <string.h>
+#include "commontype.h"
+#include "dsp_sdk_api.h"
+#include "dsp_utl_api.h"
+#include "udsp_hwlib_api.h"
+
+#ifdef DSP_SDK_FOR_WIN
+#pragma warning(disable:4996)
+#endif
+
+#define DEVICE_NUM		0
+
+/*!< \name Command definitions */
+/* \{ */
+#define CMD_PARAM_SET			"param_set"
+#define CMD_PARAM_GET			"param_get"
+#define CMD_BRINGUP				"bringup"
+#define CMD_BRINGUP_ONLY		"dsp_bringup"
+#define CMD_MACRO_SETUP			"macro_setup"
+#define CMD_HW_SETUP			"hw_setup"
+#define CMD_HW_DOWN				"hw_down"
+#define CMD_CFP_BRINGUP			"cfp_bringup"
+#define CMD_QSFP_BRINGUP		"qsfp_bringup"
+#define CMD_END					"end"
+#define CMD_SDK_FINAL			"sdk_final"
+#define CMD_RELOCK_AUTO			"auto_traffic"
+#define CMD_LDPC_SET			"ldpc_set"
+#define CMD_PRBS_ON				"prbs_on"
+#define CMD_PRBS_OFF			"prbs_off"
+#define CMD_PRBS_INS_ON			"prbs_ins_on"
+#define CMD_PRBS_INS_OFF		"prbs_ins_off"
+#define CMD_PRBS_DET_ON			"prbs_det_on"
+#define CMD_PRBS_DET_OFF		"prbs_det_off"
+#define CMD_BER_GET				"ber"
+#define CMD_BER_GET_MS			"ber_msec"
+#define CMD_BER_START			"ber_start"
+#define CMD_BER_STOP			"ber_stop"
+#define CMD_LOOP_ON				"clloop_on"
+#define CMD_LOOP_OFF			"clloop_off"
+#define CMD_LNLOOP_GET			"lnloop_get"
+#define CMD_CLLOOP_GET			"clloop_get"
+#define CMD_HELP				"help"
+#define CMD_RMS_GET				"rms"
+#define CMD_STATUS_CHECK		"status"
+#define CMD_TEST_EQL_SET		"eql_set"
+#define CMD_ADC_CAL				"adc_cal"
+#define CMD_ADC_BG_CAL_ON		"adc_bgcal_on"
+#define CMD_ADC_BG_CAL_OFF		"adc_bgcal_off"
+#define CMD_LOGLV_SET			"loglv_set"
+#define CMD_VER					"ver"
+#define CMD_AUTO_CAL_ON			"auto_cal_detect_on"
+#define CMD_AUTO_CAL_OFF		"auto_cal_detect_off"
+#define CMD_AUTO_CAL_INIT		"auto_cal_init"
+#define CMD_CFP_EXT_CHK			"cfp_ext_chk"
+#define CMD_AUTO_CAL_EXE		"auto_cal_exe"
+#define CMD_RAM1_CAPTURE		"ram1_capture"
+#define CMD_RAM3_CAPTURE		"ram3_capture"
+#define CMD_RAM7_INSERT			"ram7_insert"
+#define CMD_RAM7_INSERT_OFF		"ram7_insert_off"
+
+#define CMD_AVS_REG_SET			"avs_reg_set"
+#define CMD_TJ_MON_SET_ON		"tj_mon_set_on"
+#define CMD_TJ_MON_SET_OFF		"tj_mon_set_off"
+#define CMD_TJ_MON_GET			"tj_mon"
+#define CMD_AVS_MON_GET			"avs_mon"
+
+#define CMD_TX_SKEW_CRS_SET		"tx_coarse_skew_set"
+#define CMD_TX_SKEW_FINE_SET	"tx_fine_skew_set"
+#define CMD_RX_SKEW_CRS_SET		"rx_coarse_skew_set"
+#define CMD_RX_SKEW_FINE_SET	"rx_fine_skew_set"
+#define CMD_ADC_GAIN_SET		"adc_gain_set"
+#define CMD_TX_EQL_AMP_SET		"tx_eql_amp_set"
+#define CMD_TX_EQL_TAP_SET		"tx_eql_tap_set"
+#define CMD_TX_SKEW_CRS_GET		"tx_coarse_skew_get"
+#define CMD_TX_SKEW_FINE_GET	"tx_fine_skew_get"
+#define CMD_RX_SKEW_CRS_GET		"rx_coarse_skew_get"
+#define CMD_RX_SKEW_FINE_GET	"rx_fine_skew_get"
+#define CMD_ADC_GAIN_GET		"adc_gain_get"
+#define CMD_TX_EQL_AMP_GET		"tx_eql_amp_get"
+#define CMD_TX_EQL_TAP_GET		"tx_eql_tap_get"
+#define CMD_TX_EQL_BYPS_ON		"tx_eql_bypass_on"
+#define CMD_TX_EQL_BYPS_OFF		"tx_eql_bypass_off"
+#define CMD_TX_BYPS_THRU_SET	"tx_eql_bypass_thru_set"
+#define CMD_TX_BYPS_THRU_GET	"tx_eql_bypass_thru_get"
+#define CMD_LINE_PRBS_ON		"line_prbs_on"
+#define CMD_LINE_PRBS_OFF		"line_prbs_off"
+#define CMD_TX_MCLK_OUT_ON		"tx_mclk_on"
+#define CMD_TX_MCLK_OUT_OFF		"tx_mclk_off"
+#define CMD_DC_OFST_BYPS_ON		"dc_offset_bypass_on"
+#define CMD_DC_OFST_BYPS_OFF	"dc_offset_bypass_off"
+#define CMD_CNT_CLK_CHK			"cnt_clk_chk"
+#define CMD_PLL_UNLOCK_CHK		"pll_unlock_chk"
+
+#define CMD_CD_GET				"cd_get"
+#define CMD_DGD_GET				"dgd_get"
+#define CMD_QFACT_GET			"qfact_get"
+#define CMD_FOFFSET_GET			"foffset_get"
+
+#define CMD_HDFEC_GET			"hdfec_get"
+#define CMD_CL_GFEC_GET			"cl_gfec_get"
+#define CMD_LDPC_GET			"ldpc_get"
+#define CMD_LDPC_PRBS_GET		"ldpc_prbs_get"
+#define CMD_BJFEC_MON_SET		"bjfec_mon_set"
+#define CMD_BJFEC_GET			"bjfec_get"
+
+#define CMD_ODA_RQFILE_GET		"oda_rqfile_get"
+#define CMD_ODA_LCFILE_SET		"oda_lcfile_set"
+#define CMD_ODA_MON_GET			"oda_mon_get"
+
+#define CMD_REG_READ			"r"
+#define CMD_REG_WRITE			"w"
+#define CMD_DSP_REG_READ		"dspr"
+#define CMD_DSP_REG_WRITE		"dspw"
+#define CMD_CFP_REG_READ		"cfpr"
+#define CMD_CFP_REG_WRITE		"cfpw"
+#define CMD_QSFP_REG_READ_A		"qsfpar"
+#define CMD_QSFP_REG_WRITE_A	"qsfpaw"
+#define CMD_QSFP_REG_READ_B		"qsfpbr"
+#define CMD_QSFP_REG_WRITE_B	"qsfpbw"
+/* \} */
+
+/*! \name ALARM interval(sec) */
+/* \{ */
+#define ALARM_INTERVAL		5
+/* \} */
+
+/*!
+ * \name status 0=NULL / 1=STBY
+ */
+/* \{ */
+#define		APP_STS_NULL			0
+#define		APP_STS_STBY			1
+/* \} */
+int AppStatus;
+
+/*! \name Config file definitions */
+/* \{ */
+/*! \brief  Default config file */
+#define		APP_CONFIG_FILE		"./sample.config"
+/*! \brief	Config file input buffer size */
+#define		CONFIGFILE_INPUT_BUFFER_SIZE		128
+/*! \brief	Config file parameter type:U8 */
+#define		CONFIG_TYPE_U8						0
+/*! \brief	Config file parameter type:U16 */
+#define		CONFIG_TYPE_U16						1
+/*! \brief	Config file parameter type:U32 */
+#define		CONFIG_TYPE_U32						2
+/*! \brief	Config file parameter type:BOOL */
+#define		CONFIG_TYPE_BOOL					3
+/*! \brief	Config file parameter type:STRING */
+#define		CONFIG_TYPE_STRING					4
+/*! \brief	Config file parameter type:FLOAT */
+#define		CONFIG_TYPE_FLOAT					5
+/*! \brief	Config file parameter type:S8 */
+#define		CONFIG_TYPE_S8						6
+/*! \brief	Config file parameter type:S16 */
+#define		CONFIG_TYPE_S16						7
+/*! \brief	Config file parameter type:S32 */
+#define		CONFIG_TYPE_S32						8
+/*!	\brief	Config file parameter type : Hex U8  */
+#define		CONFIG_TYPE_H8						9
+/*!	\brief	Config file parameter type : Hex U16 */
+#define		CONFIG_TYPE_H16						10
+/*!	\brief	Config file parameter type : Hex U32 */
+#define		CONFIG_TYPE_H32						11
+/* \} */
+
+/*!
+ *	\struct		STR_S_CONFIG_TABLE_ITEM
+ *	\brief		Config data structure
+ */
+typedef struct{
+	char Name[64];				/*!<  */
+	void* Ptr;					/*!<  */
+	U8 Type;					/*!<  */
+} STR_S_CONFIG_TABLE_ITEM;
+
+
+/*!
+ *	\struct		STR_SAMPLE_CONFIG_DATA
+ *	\brief		Sample Config data
+ */
+typedef struct{
+	U8		ModType;			/*!<  */
+	U8		SdFec;				/*!<  */
+	U8		DiffCode;			/*!<  */
+	U8		LineMld;			/*!<  */
+	U8		Sampling;			/*!<  */
+	U8		Nyquist;			/*!<  */
+	U8		Distance;			/*!<  */
+	U8		C2Mapping;			/*!<  */
+	U8		Client_A;			/*!<  */
+	U8		Framer_A;			/*!<  */
+	U8		FrmTxiGfec_A;		/*!<  */
+	U8		FrmTxiBjFec_A;		/*!<  */
+	U8		FrmTxiOhe_A;		/*!<  */
+	U8		FrmTxoOhi_A;		/*!<  */
+	U8		FrmFec_A;			/*!<  */
+	U8		FrmRxiOhe_A;		/*!<  */
+	U8		FrmRxoOhi_A;		/*!<  */
+	U8		FrmRxoGfec_A;		/*!<  */
+	U8		FrmRxoBjFec_A;		/*!<  */
+	U8		Client_B;			/*!<  */
+	U8		Framer_B;			/*!<  */
+	U8		FrmTxiGfec_B;		/*!<  */
+	U8		FrmTxiBjFec_B;		/*!<  */
+	U8		FrmTxiOhe_B;		/*!<  */
+	U8		FrmTxoOhi_B;		/*!<  */
+	U8		FrmFec_B;			/*!<  */
+	U8		FrmRxiOhe_B;		/*!<  */
+	U8		FrmRxoOhi_B;		/*!<  */
+	U8		FrmRxoGfec_B;		/*!<  */
+	U8		FrmRxoBjFec_B;		/*!<  */
+	U8		C2TxOhi_A;			/*!<  */
+	U8		C2RxOhe_A;			/*!<  */
+	U8		C2TxOhi_B;			/*!<  */
+	U8		C2RxOhe_B;			/*!<  */
+	U8		ClLane;				/*!<  */
+	U8		TxiRefDiv_A;		/*!<  */
+	U8		RxoGenDiv_A;		/*!<  */
+	U8		TxiRefDiv_B;		/*!<  */
+	U8		RxoGenDiv_B;		/*!<  */
+	U8		RxoRefDiv;			/*!<  */
+	U8		AvsCtrl;			/*!<  */
+	U8		ActMode;			/*!<  */
+	U8		VcsoMod;			/*!<  */
+	U8		EvbType;			/*!<  */
+	U8		BootArea;			/*!<  */
+#if DSP_SFC_TEST==1
+	U8		LpOption1;			/*!<  */
+	U8		LpOption2;			/*!<  */
+#endif
+
+} STR_SAMPLE_CONFIG_DATA;
+
+STR_SAMPLE_CONFIG_DATA AppConfig;
+
+/*!	CONFIG data table */
+const static STR_S_CONFIG_TABLE_ITEM ConfigTable[] = {
+	/* Parameter */
+	{ "MOD_TYPE", &AppConfig.ModType, CONFIG_TYPE_U8 },
+	{ "SD_FEC", &AppConfig.SdFec, CONFIG_TYPE_U8 },
+	{ "DIFF_CODE", &AppConfig.DiffCode, CONFIG_TYPE_U8 },
+	{ "LINE_MLD", &AppConfig.LineMld, CONFIG_TYPE_U8 },
+	{ "SAMPLING", &AppConfig.Sampling, CONFIG_TYPE_U8 },
+	{ "NYQUIST", &AppConfig.Nyquist, CONFIG_TYPE_U8 },
+	{ "DISTANCE", &AppConfig.Distance, CONFIG_TYPE_U8 },
+	{ "C2MAPPING", &AppConfig.C2Mapping, CONFIG_TYPE_U8 },
+	{ "CLIENT_A", &AppConfig.Client_A, CONFIG_TYPE_U8 },
+	{ "FRAMER_A", &AppConfig.Framer_A, CONFIG_TYPE_U8 },
+	{ "FRM_TXI_GFEC_A", &AppConfig.FrmTxiGfec_A, CONFIG_TYPE_U8 },
+	{ "FRM_TXI_BJFEC_A", &AppConfig.FrmTxiBjFec_A, CONFIG_TYPE_U8 },
+	{ "FRM_TXI_OHE_A", &AppConfig.FrmTxiOhe_A, CONFIG_TYPE_U8 },
+	{ "FRM_TXO_OHI_A", &AppConfig.FrmTxoOhi_A, CONFIG_TYPE_U8 },
+	{ "FRM_FEC_A", &AppConfig.FrmFec_A, CONFIG_TYPE_U8 },
+	{ "FRM_TXI_OHE_A", &AppConfig.FrmRxiOhe_A, CONFIG_TYPE_U8 },
+	{ "FRM_RXO_OHI_A", &AppConfig.FrmRxoOhi_A, CONFIG_TYPE_U8 },
+	{ "FRM_RXO_GFEC_A", &AppConfig.FrmRxoGfec_A, CONFIG_TYPE_U8 },
+	{ "FRM_RXO_BJFEC_A", &AppConfig.FrmRxoBjFec_A, CONFIG_TYPE_U8 },
+	{ "CLIENT_B", &AppConfig.Client_B, CONFIG_TYPE_U8 },
+	{ "FRAMER_B", &AppConfig.Framer_B, CONFIG_TYPE_U8 },
+	{ "FRM_TXI_GFEC_B", &AppConfig.FrmTxiGfec_B, CONFIG_TYPE_U8 },
+	{ "FRM_TXI_BJFEC_B", &AppConfig.FrmTxiBjFec_B, CONFIG_TYPE_U8 },
+	{ "FRM_TXI_OHE_B", &AppConfig.FrmTxiOhe_B, CONFIG_TYPE_U8 },
+	{ "FRM_TXO_OHI_B", &AppConfig.FrmTxoOhi_B, CONFIG_TYPE_U8 },
+	{ "FRM_FEC_B", &AppConfig.FrmFec_B, CONFIG_TYPE_U8 },
+	{ "FRM_RXI_OHE_B", &AppConfig.FrmRxiOhe_B, CONFIG_TYPE_U8 },
+	{ "FRM_RXO_OHI_B", &AppConfig.FrmRxoOhi_B, CONFIG_TYPE_U8 },
+	{ "FRM_RXO_GFEC_B", &AppConfig.FrmRxoGfec_B, CONFIG_TYPE_U8 },
+	{ "FRM_RXO_BJFEC_B", &AppConfig.FrmRxoBjFec_B, CONFIG_TYPE_U8 },
+	{ "C2_TX_OHI_A", &AppConfig.C2TxOhi_A, CONFIG_TYPE_U8 },
+	{ "C2_RX_OHE_A", &AppConfig.C2RxOhe_A, CONFIG_TYPE_U8 },
+	{ "C2_TX_OHI_B", &AppConfig.C2TxOhi_B, CONFIG_TYPE_U8 },
+	{ "C2_RX_OHE_B", &AppConfig.C2RxOhe_B, CONFIG_TYPE_U8 },
+	{ "CL_LANE", &AppConfig.ClLane, CONFIG_TYPE_U8 },
+	{ "TXI_REF_DIV_A", &AppConfig.TxiRefDiv_A, CONFIG_TYPE_U8 },
+	{ "RXO_GEN_DIV_A", &AppConfig.RxoGenDiv_A, CONFIG_TYPE_U8 },
+	{ "TXI_REF_DIV_B", &AppConfig.TxiRefDiv_B, CONFIG_TYPE_U8 },
+	{ "RXO_GEN_DIV_B", &AppConfig.RxoGenDiv_B, CONFIG_TYPE_U8 },
+	{ "RXO_REF_DIV", &AppConfig.RxoRefDiv, CONFIG_TYPE_U8 },
+	{ "AVS_CTRL", &AppConfig.AvsCtrl, CONFIG_TYPE_U8 },
+	{ "ACT_MODE", &AppConfig.ActMode, CONFIG_TYPE_U8 },
+	{ "VCSO_MOD", &AppConfig.VcsoMod, CONFIG_TYPE_U8 },
+	{ "EVB_TYPE", &AppConfig.EvbType, CONFIG_TYPE_U8 },
+	{ "BOOT_AREA", &AppConfig.BootArea, CONFIG_TYPE_U8 },
+#if DSP_SFC_TEST==1
+	{ "LP_OPTION_1", &AppConfig.LpOption1, CONFIG_TYPE_U8 },
+	{ "LP_OPTION_2", &AppConfig.LpOption2, CONFIG_TYPE_U8 },
+#endif
+	/* END */
+	{ "", NULL, 0 }
+};
+
+DSP_SDK_SET_PARAM SdkParam;
+
+void command_exe( void* context );
+void cgbe_ber_info(U8 mod_type, STR_CL_CGBE_BER_DATA* data);
+S16 cgbe_ber_mon( void* context, CLIENT_CH ch, STR_CL_CGBE_BER_DATA* data );
+void otu4_ber_info( U8 mod_type, STR_CL_OTU4_BER_DATA* data );
+S16 otu4_ber_mon( void* context, STR_CL_OTU4_BER_DATA* data );
+char ConfigFile[256];
+
+static BOOL config_read_file( char* filename );
+static BOOL config_read( FILE* fp, const char* string, void* val, U8 type );
+static BOOL config_read_value( U8 type, char* str, void* val );
+
+void dsp_param_get_info( DSP_SDK_SET_PARAM* param );
+void dsp_rms_check_info( DSP_RMS_INFO* info );
+void dsp_status_check_info(DSP_STATUS_CHECK_INFO* info );
+void ver_get_info( void* context );
+void reg_read_info( void* context, U32 addr );
+void reg_write_info( void* context, U32 addr, U32 data );
+void dsp_tj_mon_info( STR_TJ_MON_DATA* tj_mon );
+void dsp_avs_mon_info( STR_AVS_MON_DATA* avs_mon );
+void dsp_lnloop_info( DSP_LOOP_INFO* info );
+void dsp_clloop_info( DSP_LOOP_INFO* info );
+
+
+void hdfec_info( CLIENT_CH ch, STR_HDFEC_BER_DATA* hdfec_ber );
+S16 hdfec_mon( void* context, CLIENT_CH ch, STR_HDFEC_BER_DATA* data );
+void cl_gfec_info( CLIENT_CH ch, STR_GFEC_BER_DATA* data );
+S16 cl_gfec_mon( void* context, CLIENT_CH ch, STR_GFEC_BER_DATA* data );
+void ldpc_info( CLIENT_CH ch, STR_LDPC_BER_DATA* data );
+S16 ldpc_mon( void* context, CLIENT_CH ch, STR_LDPC_BER_DATA* data );
+void ldpc_prbs_info( CLIENT_CH ch, STR_LDPC_PRBS_BER_DATA* data );
+S16 ldpc_prbs_mon( void* context, CLIENT_CH ch, STR_LDPC_PRBS_BER_DATA* data );
+void bjfec_info( CLIENT_CH ch, STR_CL_BJFEC_DATA* data );
+S16 bjfec_mon( void* context, CLIENT_CH ch, STR_CL_BJFEC_DATA* data );
+S16 cgbe_alm_mon( void* context, CLIENT_CH ch, DIRECTION dira, DIRECTION dirb, STR_CL_CGBE_ALM_DATA* atx, STR_CL_CGBE_ALM_DATA* arx, STR_CL_CGBE_ALM_DATA* btx, STR_CL_CGBE_ALM_DATA* brx );
+void cgbe_alm_info( CLIENT_CH ch, DIRECTION dir, STR_CL_CGBE_ALM_DATA* data );
+void pll_unlock_mon( void* context, DSP_PLL_UNLOCK_INFO* info );
+void oda_mon( STR_ODA_LC_DATA* oda_info );
+
+void sample_m13_I2C_config_init(void)
+{
+	/* CONFIG file data clear */
+	memset(&AppConfig, 0, sizeof(AppConfig));
+
+	AppConfig.ModType       = 1;
+	AppConfig.SdFec         = 1;
+	AppConfig.DiffCode      = 0;
+	AppConfig.LineMld       = 0;
+	AppConfig.Sampling      = 0;
+	AppConfig.Nyquist       = 1;
+	AppConfig.Distance      = 4;
+
+	/* Client A */
+	AppConfig.C2Mapping     = 0;
+	AppConfig.Client_A      = 1;
+	AppConfig.Framer_A      = 1;
+	AppConfig.FrmTxiGfec_A  = 0;
+	AppConfig.FrmTxiBjFec_A = 0;
+	AppConfig.FrmTxiOhe_A   = 0;
+	AppConfig.FrmTxoOhi_A   = 1;
+	AppConfig.FrmFec_A      = 1;
+	AppConfig.FrmRxiOhe_A   = 1;
+	AppConfig.FrmRxoOhi_A   = 0;
+	AppConfig.FrmRxoGfec_A  = 0;
+	AppConfig.FrmRxoBjFec_A = 0;
+
+	/* Client B */
+	AppConfig.Client_B      = 1;
+	AppConfig.Framer_B      = 1;
+	AppConfig.FrmTxiGfec_B  = 0;
+	AppConfig.FrmTxiBjFec_B = 0;
+	AppConfig.FrmTxiOhe_B   = 0;
+	AppConfig.FrmTxoOhi_B   = 1;
+	AppConfig.FrmFec_B      = 1;
+	AppConfig.FrmRxiOhe_B   = 1;
+	AppConfig.FrmRxoOhi_B   = 0;
+	AppConfig.FrmRxoGfec_B  = 0;
+	AppConfig.FrmRxoBjFec_B = 0;
+
+	/* C2Mapping */
+	AppConfig.C2TxOhi_A = 0;
+	AppConfig.C2RxOhe_A = 0;
+	AppConfig.C2TxOhi_B = 0;
+	AppConfig.C2RxOhe_B = 0;
+
+	/* Client Lane */
+	AppConfig.ClLane = 0;
+
+	/* Clock Div */
+	AppConfig.TxiRefDiv_A = 0;
+	AppConfig.RxoGenDiv_A = 0;
+	AppConfig.TxiRefDiv_B = 0;
+	AppConfig.RxoGenDiv_B = 0;
+	AppConfig.RxoRefDiv   = 0;
+
+	AppConfig.AvsCtrl   = 0;
+	AppConfig.ActMode   = 1;
+	AppConfig.VcsoMod   = 1;
+	AppConfig.EvbType   = 0;
+	AppConfig.BootArea  = 0;
+	AppConfig.LpOption1 = 0;
+	AppConfig.LpOption2 = 0;
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			int main( int argc, char *argv[] )
+ *	\brief		Main function of sample application
+ *	\param[in]	argc	Number of the argument
+ *	\param[in]	argv[]	Array of the arguments
+ *	\retval		0		OK
+ */
+//int main( int argc, char *argv[] ) 
+int sample_app_main(void)
+{
+	int ret1 = 0;
+	int ret2 = 0;
+	BOOL result;
+	STR_DSP_CONTEXT* context;
+
+	/* status clear */
+	AppStatus = APP_STS_NULL;
+
+#if 0  /********************** Remove by Brandon ***********************/
+	/* Config file read */
+	result = config_read_file( APP_CONFIG_FILE );
+	if( result == TRUE ){
+		printf( "sample.config read. OK\n" );
+	}else{
+		printf( "sample.config read. NG\n" );
+	}
+#endif /********************** Remove by Brandon ***********************/
+
+	/* DSP-SDK resume */
+	printf( "dsp_utl_sdk_resume...\n" );
+	ret1 = dsp_utl_sdk_resume( (void**)&context, DEVICE_NUM );
+	if( ret1 == RESUME_OK){
+		printf( "Context file version is matched with SDK version\n" );
+	}else if( ret1 == RESUME_W001){
+		printf( "Context file version is mismatched but parameters have not been changed\n" );
+		printf("Context file version updated\n");
+		ret1 = 0;
+	}else if( ret1 == RESUME_W002) {
+		printf("Context file version is mismatched and parameter is added to the structure\n");
+		ret1 = 0;
+	}else if( ret1 == RESUME_W003) {
+		printf("Context file can not be update\n");
+		ret1 = 0;
+	}else if( ret1 == RESUME_E001) {
+			printf("Context file version is 0.48 or lower\n");
+		dsp_utl_context_delete(context);
+		dsp_utl_sdk_resume((void**)&context, DEVICE_NUM);
+		printf("Regenerate the context file\n");
+		ret1 = 0;
+	}else if ( ret1 == RESUME_E002) {
+		printf("Context file was not be saved\n");
+		ret1 = 0;
+	}else{
+		printf("Context file resume failed\n");
+	}
+
+	/* HWlib driver open */
+/*	
+	printf( "udsp_hwlib_open. " );
+	ret2 = udsp_hwlib_open( context );
+	if( ret2 == 0 ){
+		printf( "OK\n" );
+	}else{
+		printf( "NG\n" );
+		//return(0);
+	}
+*/
+	/* log level set */
+	if( ret1 == 0 ){
+		printf( "dsp_log_level_set. (Level:INFO)\n" );
+		dsp_log_level_set( context, INFO );
+		//printf( "OK\n" );
+	}
+
+#if 0  /********************** Remove by Brandon ***********************/
+	/* Command wait */
+	if( (ret1==0) && (ret2==0) ){
+		/* STANDBY */
+		AppStatus = APP_STS_STBY;
+		printf( "Command Wait.\n>" );
+
+		/* wait command */
+		command_exe( context );
+
+	}else{
+		printf( "sample_app initialize error.\n" );
+		printf( "press the return key to exit." );
+		getchar();
+	}
+#else /********************** Remove by Brandon ***********************/
+	sample_m13_I2C_config_init();
+
+	printf("%s(%d): DSP param set.\r\n", __FUNCTION__, __LINE__);
+	ret = dsp_utl_param_set(context, (DSP_SDK_SET_PARAM*)&AppConfig );
+	if( ret != 0 ){
+		printf( "NG\n>" );
+	}else{
+		printf( "OK\n>" );
+	}
+#endif
+	/**/
+	printf( "sample_app close.\n" );
+
+	//udsp_hwlib_close(context);
+
+	return(0);
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			void command_exe( void* context )
+ *	\brief		Execute API/SDK command
+ *	\param[in]	context		Pointer to context memory
+ *	\return		None
+ */
+void command_exe( void* context )
+{
+	int ret = 0;
+	int intvl = 0;
+	int end = 0;
+#if 0	
+	U32 addr = 0;
+#endif	
+	U32 val = 0;
+	int prm1 = 0;
+	int prm2 = 0;
+	int prm3 = 0;
+	int prm4 = 0;
+	int prm5 = 0;
+	char buf[256] = {0};
+	char past[256] = {0};
+	char file[256] = {0};
+	U8 mod_type = 0;
+	U8 ln_mode = 0;
+	BOOL result = FALSE;
+	double dprm = 0.0;
+	char *tmp ;
+
+	STR_CL_OTU4_BER_DATA otu4_ber_data = {0};
+	DSP_RMS_INFO		rms_info = {0};
+	DSP_STATUS_CHECK_INFO	status_check_info = {0};
+	STR_CL_CGBE_BER_DATA cgbe_ber_data = {0};
+	DSP_PLL_UNLOCK_INFO pll_unlock = { 0 };
+
+	STR_TJ_MON_DATA tj_mon = {0};
+	STR_AVS_MON_DATA avs_mon = {0};
+	STR_DSP_COARSE_SKEW tx_crs_skew = {0};
+	STR_DSP_COARSE_SKEW rx_crs_skew = {0};
+	STR_DSP_TX_FINE_SKEW tx_fine_skew = {0};
+	STR_DSP_RX_FINE_SKEW rx_fine_skew = {0};
+	STR_DSP_TX_EQL_AMP txeql_amp = {0};
+	STR_DSP_BYPASS_THRU_DATA tx_bypass = {0};
+
+	DSP_CD_DATA cd = {0};
+	DSP_DGD_DATA dgd = {0};
+	DSP_QFACT_DATA qfact = {0};
+	DSP_FOFFSET_DATA foffset = {0};
+
+	STR_HDFEC_BER_DATA hdfec_ber = {0};
+	STR_CL_CGBE_ALM_DATA cgbe_alm = {0};
+	STR_GFEC_BER_DATA gfec_ber = {0};
+	STR_LDPC_BER_DATA ldpc_ber = {0};
+	STR_LDPC_PRBS_BER_DATA ldpc_prbs_ber = {0};
+	STR_CL_BJFEC_DATA bjfec_ber = {0};
+#if 0		
+	DSP_REF_SYNC_INFO ref_sync_info = {0};
+	DSP_LINE_SYNC_INFO line_sync_info = {0};
+#endif	
+	ODA_DT oda_req = {0};
+	STR_ODA_RQ_INFO rq_info = {0};
+	STR_ODA_LC_DATA oda_info = {0};
+
+	printf("\nMod type:%d\n", ((STR_DSP_CONTEXT*)context)->DspSdkParam.ModType);
+	
+//if(  == MOD_TYPE_16QAM ){
+		
+//}	
+	
+	
+	/* wait command */
+	while(end==0){
+		tmp = fgets( buf, sizeof(buf), stdin );
+		if (tmp) 
+			printf("\n") ;
+
+		if( (buf[0]==27) && (buf[1]==91) && (buf[2]==65) ){
+			udsp_strcpy( buf, past );
+			printf( ">" );
+			printf( "%s", buf );
+		}
+		udsp_strcpy( past, buf );
+		/* Param set */
+		if( strncmp( buf, CMD_PARAM_SET, strlen(CMD_PARAM_SET) ) == 0 ){
+			ret = sscanf( buf+ strlen(CMD_PARAM_SET), " -f %s", ConfigFile );
+			if( ret >= 1 ){
+				result = config_read_file( ConfigFile );
+				if( result == TRUE ){
+					printf( "config file read OK.\n" );
+				}else{
+					printf( "config file read NG.\n" );
+				}
+			}
+			printf( "DSP param set. " );
+			ret = dsp_utl_param_set( context, (DSP_SDK_SET_PARAM*)&AppConfig );
+			if( ret != 0 ){
+				printf( "NG\n>" );
+			}else{
+				printf( "OK\n>" );
+			}
+		}/* Param get */
+		else if( strncmp( buf, CMD_PARAM_GET, strlen(CMD_PARAM_GET) ) == 0 ){
+			printf( "DSP param get. \n" );
+			ret = dsp_utl_param_get( context, &SdkParam );
+			if( ret == 0 ){
+				dsp_param_get_info( &SdkParam );
+			}else{
+				printf("NG\n");
+			}
+			printf(">");
+		}/* DSP bringup */
+		else if( strncmp( buf, CMD_BRINGUP_ONLY, strlen(CMD_BRINGUP_ONLY) ) == 0 ){
+			/* bringup */
+			printf( "Dsp_bringup... " );
+			fflush(stdout);
+			ret = dsp_bringup( context );
+			if( ret != 0 ){
+				printf( "NG\n>" );
+			}else{
+				printf( "OK\n>" );
+			}
+		}
+		/* DSP bringup */
+		else if( strncmp( buf, CMD_BRINGUP, strlen(CMD_BRINGUP) ) == 0 ){
+			printf( "bringup ok ? (y or n) >" );
+			ret = getchar();
+			if( ret == 'n' ){
+				printf("continue\n>");
+				tmp=fgets( buf, sizeof(buf), stdin );
+				continue;
+			}
+			tmp = fgets( buf, sizeof(buf), stdin );
+			ln_mode = ((STR_DSP_CONTEXT*)context)->DspSdkParam.LineMode;
+			printf("bringup seq. mode(%d)\n", ln_mode);
+
+			/* HW setup */
+			printf("Hw_setup start... ");
+			fflush( stdout );
+#if (HWLIB_NEL_SAMPLE==NEL_EVB) || (HWLIB_NEL_SAMPLE==EVB_1)
+			ret = udsp_hw_setup(context);
+#endif
+			if( ret != 0 ){
+				printf( "NG\n" );
+			}else{
+				printf( "OK\n" );
+			}
+			/* Macro setup */
+			printf("Macro_setup start... ");
+			fflush(stdout);
+			ret = dsp_macro_setup(context);
+			if( ret != 0 ){
+				printf( "NG\n" );
+			}else{
+				printf( "OK\n" );
+			}
+			reg_read_info( context, 0x00002304 );
+			reg_read_info( context, 0x00002300 );
+			reg_read_info( context, 0x00002300 );
+			reg_read_info( context, 0x00002300 );
+			reg_read_info( context, 0x00002300 );
+			reg_read_info( context, 0x00000d50 );
+			/* bringup */
+			printf( "Dsp_bringup start... " );
+			fflush(stdout);
+			ret = dsp_bringup( context );
+			if( ret != 0 ){
+				printf( "NG\n" );
+			}else{
+				printf( "OK\n" );
+			}
+#if (HWLIB_NEL_SAMPLE==NEL_EVB) || (HWLIB_NEL_SAMPLE==EVB_1)
+			/* Line - CFP2 ON */
+			printf("Cfp_bringup... ");
+			fflush(stdout);
+			udsp_cfp_bringup( context );
+			printf("OK\n");
+#endif
+#if (HWLIB_NEL_SAMPLE==NEL_EVB) || (HWLIB_NEL_SAMPLE==EVB_1)
+			/* EQL set */
+			printf( "EQL set start... " );
+			fflush(stdout);
+			udsp_test_eql_set( context );
+			printf("OK\n");
+#endif
+			/* RMS Get */
+			printf("RMS get. ");
+			ret = dsp_rms_get( context, &rms_info );
+			if( ret == 0 ){
+				printf("OK\n");
+				dsp_rms_check_info( &rms_info );
+			}else{
+				printf("NG\n");
+			}
+			/* ADC Cal */
+			printf( "ADC cal start... " );
+			fflush(stdout);
+			dsp_adc_cal_set( context );
+			printf("OK\n");
+			reg_read_info( context, 0x00002410 );
+			reg_read_info( context, 0x00002414 );
+			/* Auto traffic acquisition */
+			printf("Auto_traffic_acq... ");
+			fflush(stdout);
+			ret = dsp_auto_traffic_acq(context);
+			if( ret == 0 ){
+				printf("OK\n");
+			}else{
+				printf("NG\n");
+			}
+			reg_read_info( context, 0x000004a0 );
+			if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.ModType == MOD_TYPE_QPSK_OC ){
+				dsp_dsp_reg_read( context, 0x00000a34, &val );
+				reg_read_info( context, 0x00000a34 );
+			}else{
+				dsp_dsp_reg_read( context, 0x00000980, &val );
+				reg_read_info( context, 0x00000980 );
+			}
+			printf(">");
+		}
+		
+#if 0		
+		/* Create script */
+		else if( strncmp( buf, "create_script", strlen("create_script") ) == 0 ){
+			printf( "Create script files...\n" );
+			fflush(stdout);
+			dsp_actmode_set( context, 2 );
+			printf( " hw_setup ..." );
+			fflush( stdout );
+			udsp_hw_setup( context );
+			printf( "OK\n" );
+			printf( " hw_down ..." );
+			fflush( stdout );
+			udsp_hw_down( context );
+			printf( "OK\n" );
+			printf( " macro_setup ..." );
+			fflush( stdout );
+			dsp_macro_setup( context );
+			printf( "OK\n" );
+			printf( " dsp_bringup ..." );
+			fflush( stdout );
+			dsp_bringup( context );
+			printf( "OK\n" );
+			printf( " clloop_on ..." );
+			fflush( stdout );
+			dsp_cl_loopback_set( context, CLIENT_LOOP_NEAR_END_A );
+			dsp_cl_loopback_set( context, CLIENT_LOOP_NEAR_END_B );
+			dsp_cl_loopback_set( context, CLIENT_LOOP_FAR_END );
+			dsp_cl_loopback_set( context, CLIENT_LOOP_LONG_FAR_END );
+			printf( "OK\n" );
+			printf( " clloop_off ..." );
+			fflush( stdout );
+			dsp_cl_loopback_set( context, CLIENT_LOOP_OFF );
+			printf( "OK\n" );
+			printf( " prbs_on ..." );
+			fflush( stdout );
+			if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.Client_A == CLI_100GBE ){
+				if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.ModType == MOD_TYPE_16QAM ){
+					dsp_client_cgbe_prbs_set( context, CH_AB, PRBS_INS_ON, PRBS_PTN_31 );
+					printf( "OK\n" );
+					printf( " prbs_off ..." );
+					fflush( stdout );
+					dsp_client_cgbe_prbs_set( context, CH_AB, PRBS_INS_OFF, PRBS_PTN_31 );
+				}else{
+					dsp_client_cgbe_prbs_set( context, CH_A, PRBS_INS_ON, PRBS_PTN_31 );
+					printf( "OK\n" );
+					printf( " prbs_off ..." );
+					fflush( stdout );
+					dsp_client_cgbe_prbs_set( context, CH_A, PRBS_INS_OFF, PRBS_PTN_31 );
+				}
+			}else{
+				dsp_ldpc_prbs_set( context, PRBS_INS_ON, PRBS_PTN_31, PRBS_AREA_PAYLOAD );
+				printf( "OK\n" );
+				printf( " prbs_off ..." );
+				fflush( stdout );
+				dsp_ldpc_prbs_set( context, PRBS_INS_OFF, PRBS_PTN_31, PRBS_AREA_PAYLOAD );
+			}
+			printf( "OK\n" );
+			printf( " ref_sync ..." );
+			fflush( stdout );
+			dsp_ref_sync_set( context, &ref_sync_info );
+			printf( "OK\n" );
+			printf( " line_sync ..." );
+			fflush( stdout );
+			dsp_line_sync_set( context, &line_sync_info );
+			printf( "OK\n" );
+			printf( " man_traffic ..." );
+			fflush( stdout );
+			dsp_man_traffic_acq( context );
+			printf( "OK\n" );
+			printf( " auto_traffic ..." );
+			fflush( stdout );
+			dsp_auto_traffic_acq( context );
+			printf( "OK\n" );
+			printf( " status ..." );
+			fflush( stdout );
+			dsp_status_check( context, &status_check_info );
+			printf( "OK\n" );
+			dsp_actmode_set( context, 1 );
+			printf( ">" );
+		}
+#endif		
+		/* SDK End */
+		else if( strncmp( buf, CMD_END, strlen(CMD_END) ) == 0 ){
+			//if( AppStatus == APP_STS_STBY ){
+				end = 1;
+				break;
+			//}
+		}
+		/* SDK final */
+		else if( strncmp( buf, CMD_SDK_FINAL, strlen(CMD_SDK_FINAL) ) == 0 ){
+			/* DSP-SDK final */
+			printf( "dsp_sdk_final.\n" );
+			dsp_utl_sdk_final( context );
+			printf( " OK\n" );
+			end = 1;
+			break;
+		}
+		/* Auto traffic acquisition */
+		else if(strncmp( buf, CMD_RELOCK_AUTO, strlen(CMD_RELOCK_AUTO) ) == 0){
+			printf( "Auto_traffic_acq. " );
+			ret = dsp_auto_traffic_acq( context );
+			if( ret == 0 ){
+				printf( "OK\n" );
+			}else{
+				printf( "NG\n" );
+			}
+			reg_read_info( context, 0x000004a0 );
+			if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.ModType == MOD_TYPE_QPSK_OC ){
+				dsp_dsp_reg_read( context, 0x00000a34, &val );
+				reg_read_info( context, 0x00000a34 );
+			}else{
+				dsp_dsp_reg_read( context, 0x00000980, &val );
+				reg_read_info( context, 0x00000980 );
+			}
+			printf(">");
+		}/* PRBS ON */
+		else if( strncmp( buf, CMD_PRBS_ON, strlen(CMD_PRBS_ON) ) == 0 ){
+			ret = sscanf( buf + strlen(CMD_PRBS_ON), " %d %d", &prm2, &prm3 );
+			prm1 = PRBS_INS_ON;
+			if( ret != 2 ){
+				prm2 = PRBS_PTN_31;
+				prm3 = PRBS_AREA_PAYLOAD;
+			}
+			if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.Client_A == CLI_100GBE ){
+				printf( "100GbE PRBS-ON. " );
+				ret = dsp_client_cgbe_prbs_set( context, CH_AB, prm1, prm2 );
+			}else{
+				printf( "OTU4 PRBS-ON. " );
+				ret = dsp_ldpc_prbs_set( context, prm1, prm2, prm3 );
+			}
+			if( ret == 0 ){
+				printf( "OK\n>" );
+			}else{
+				printf( "NG\n>" );
+			}
+		}/* PRBS OFF */
+		else if( strncmp( buf, CMD_PRBS_OFF, strlen(CMD_PRBS_OFF) ) == 0 ){
+			//ret = sscanf( buf + strlen(CMD_PRBS_OFF), " %d %d %d", &prm1, &prm2, &prm3 );
+			//if( ret != 3 ){
+				prm1 = PRBS_INS_OFF;
+				prm2 = PRBS_PTN_31;
+				prm3 = PRBS_AREA_PAYLOAD;
+			//}
+			if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.Client_A == CLI_100GBE ){
+				printf( "100GbE PRBS-OFF. " );
+				ret = dsp_client_cgbe_prbs_set( context, CH_AB, prm1, prm2 );
+			}else{
+				printf( "OTU4 PRBS-OFF. " );
+				ret = dsp_ldpc_prbs_set( context, prm1, prm2, prm3 );
+			}
+			if( ret == 0 ){
+				printf( "OK\n>" );
+			}else{
+				printf( "NG\n>" );
+			}
+		}
+		/* PRBS Insert ON */
+		else if( strncmp( buf, CMD_PRBS_INS_ON, strlen(CMD_PRBS_INS_ON) ) == 0 ){
+			ret = sscanf( buf + strlen(CMD_PRBS_INS_ON), " %d %d", &prm2, &prm3 );
+			prm1 = PRBS_INS_ON;
+			if( ret != 2 ){
+				prm2 = PRBS_PTN_31;
+				prm3 = PRBS_AREA_PAYLOAD;
+			}
+			if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.Client_A == CLI_100GBE ){
+				printf( "100GbE PRBS-Ins-ON. " );
+				ret = dsp_client_cgbe_prbs_ins_set( context, CH_AB, prm1, prm2 );
+			}else{
+				printf( "OTU4 PRBS-Ins-ON. " );
+				ret = dsp_ldpc_prbs_ins_set( context, prm1, prm2, prm3 );
+			}
+			if( ret == 0 ){
+				printf( "OK\n>" );
+			}else{
+				printf( "NG\n>" );
+			}
+		}/* PRBS Detect ON */
+		else if( strncmp( buf, CMD_PRBS_DET_ON, strlen(CMD_PRBS_DET_ON) ) == 0 ){
+			ret = sscanf( buf + strlen(CMD_PRBS_DET_ON), " %d %d", &prm2, &prm3 );
+			prm1 = PRBS_DET_ON;
+			if( ret != 2 ){
+				prm2 = PRBS_PTN_31;
+				prm3 = PRBS_AREA_PAYLOAD;
+			}
+			if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.Client_A == CLI_100GBE ){
+				printf( "100GbE PRBS-Det-ON. " );
+				ret = dsp_client_cgbe_prbs_det_set( context, CH_AB, prm1, prm2 );
+			}else{
+				printf( "OTU4 PRBS-Det-ON. " );
+				ret = dsp_ldpc_prbs_det_set( context, prm1, prm2, prm3 );
+			}
+			if( ret == 0 ){
+				printf( "OK\n>" );
+			}else{
+				printf( "NG\n>" );
+			}
+		}/* PRBS Insert OFF */
+		else if( strncmp( buf, CMD_PRBS_INS_OFF, strlen(CMD_PRBS_INS_OFF) ) == 0 ){
+			prm1 = PRBS_INS_OFF;
+			prm2 = PRBS_PTN_31;
+			prm3 = PRBS_AREA_PAYLOAD;
+			if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.Client_A == CLI_100GBE ){
+				printf( "100GbE PRBS-Ins-OFF. " );
+				ret = dsp_client_cgbe_prbs_ins_set( context, CH_AB, prm1, prm2 );
+			}else{
+				printf( "OTU4 PRBS-Ins-OFF. " );
+				ret = dsp_ldpc_prbs_ins_set( context, prm1, prm2, prm3 );
+			}
+			if( ret == 0 ){
+				printf( "OK\n>" );
+			}else{
+				printf( "NG\n>" );
+			}
+		}/* PRBS Detect OFF */
+		else if( strncmp( buf, CMD_PRBS_DET_OFF, strlen(CMD_PRBS_DET_OFF) ) == 0 ){
+			prm1 = PRBS_DET_OFF;
+			prm2 = PRBS_PTN_31;
+			prm3 = PRBS_AREA_PAYLOAD;
+			if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.Client_A == CLI_100GBE ){
+				printf( "100GbE PRBS-Det-OFF. " );
+				ret = dsp_client_cgbe_prbs_det_set( context, CH_AB, prm1, prm2 );
+			}else{
+				printf( "OTU4 PRBS-Det-OFF. " );
+				ret = dsp_ldpc_prbs_det_set( context, prm1, prm2, prm3 );
+			}
+			if( ret == 0 ){
+				printf( "OK\n>" );
+			}else{
+				printf( "NG\n>" );
+			}
+		}
+		/* BER start */
+		else if( strncmp( buf, CMD_BER_START, strlen(CMD_BER_START) ) == 0 ){
+				ret = sscanf( buf+strlen(CMD_BER_START), " %d", &intvl );
+				if( ret != 1 ){
+					intvl = 2;
+				}
+				printf( "BER start. %d[sec] interval", intvl );
+				mod_type = ((STR_DSP_CONTEXT*)context)->DspSdkParam.ModType;
+				if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.Client_A == CLI_100GBE ){
+					dsp_client_cgbe_ber_start( context, CH_AB, intvl, &cgbe_ber_mon );
+				}else{
+					dsp_client_otu4_ber_start( context, intvl, &otu4_ber_mon );
+				}
+				printf("\n");
+		}/* BER stop */
+		else if( strncmp( buf, CMD_BER_STOP, strlen(CMD_BER_STOP) ) == 0 ){
+				printf( "BER stop." );
+				mod_type = ((STR_DSP_CONTEXT*)context)->DspSdkParam.ModType;
+				if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.Client_A == CLI_100GBE ){
+					dsp_client_cgbe_ber_stop( context, CH_AB );
+				}else{
+					dsp_client_otu4_ber_stop( context );
+				}
+				printf("\n>");
+		}/* BER Get [msec order] */
+		else if( strncmp( buf, CMD_BER_GET_MS, strlen(CMD_BER_GET_MS) ) == 0 ){
+				ret = sscanf( buf+strlen(CMD_BER_GET_MS), " %d", &intvl );
+				if( ret != 1 ){
+					intvl = 100;
+				}
+				printf( "BER get. %d[msec]\n", intvl );
+				mod_type = ((STR_DSP_CONTEXT*)context)->DspSdkParam.ModType;
+				if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.Client_A == CLI_100GBE ){
+					dsp_client_cgbe_ber_get_msec( context, CH_AB, intvl, &cgbe_ber_data );
+					cgbe_ber_info( mod_type, &cgbe_ber_data );
+				}else{
+					dsp_client_otu4_ber_get_msec( context, intvl, &otu4_ber_data );
+					otu4_ber_info( mod_type, &otu4_ber_data );
+				}
+				printf( ">" );
+		}/* BER Get */
+		else if( strncmp( buf, CMD_BER_GET, strlen(CMD_BER_GET) ) == 0 ){
+				ret = sscanf( buf+strlen(CMD_BER_GET), " %d", &intvl );
+				if( ret != 1 ){
+					intvl = 2;
+				}
+				printf( "BER get. %d[sec]\n", intvl );
+				mod_type = ((STR_DSP_CONTEXT*)context)->DspSdkParam.ModType;
+				if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.Client_A == CLI_100GBE ){
+					printf("CLI_100GBE\n");
+					dsp_client_cgbe_ber_get( context, CH_AB, intvl, &cgbe_ber_data );
+					cgbe_ber_info( mod_type, &cgbe_ber_data );
+				}else{
+					printf("OTU4\n");
+					dsp_client_otu4_ber_get( context, intvl, &otu4_ber_data );
+					otu4_ber_info( mod_type, &otu4_ber_data );
+				}
+				printf( ">" );
+		}/* DSP_RMS_GET */
+		else if( strncmp( buf, CMD_RMS_GET, strlen(CMD_RMS_GET) ) == 0 ){
+				printf("RMS get. ");
+				ret = dsp_rms_get( context, &rms_info );
+				if( ret == 0 ){
+					printf("OK\n");
+					dsp_rms_check_info( &rms_info );
+				}else{
+					printf("NG\n");
+				}
+				printf(">");
+		}/* CL_LOOP_ON */
+		else if( strncmp( buf, CMD_LOOP_ON, strlen(CMD_LOOP_ON) ) == 0 ){
+			printf( "Client loopback ON." );
+			ret = sscanf( buf+strlen(CMD_LOOP_ON), " %d", &val );
+			if( ret != 1 ){
+				val = CLIENT_LOOP_FAR_END;
+			}
+			ret = dsp_cl_loopback_set( context, val );
+			if( ret == 0 ){
+				if( val == CLIENT_LOOP_NEAR_END_A ){
+					printf( " near-end-A " );
+				}else if( val == CLIENT_LOOP_NEAR_END_B ){
+					printf( " near-end-B " );
+				}else if( val == CLIENT_LOOP_FAR_END ){
+					printf( " far-end-loop " );
+				}else if( val == CLIENT_LOOP_LONG_FAR_END ){
+					printf( " long-far-end-loop " );
+				}
+				printf( "OK\n>" );
+			}else{
+				printf( "NG\n>" );
+			}
+		}/* CL_LOOP_OFF */
+		else if( strncmp( buf, CMD_LOOP_OFF, strlen(CMD_LOOP_OFF) ) == 0 ){
+			printf( "Client loopback OFF." );
+			ret = dsp_cl_loopback_set( context, CLIENT_LOOP_OFF );
+			if( ret == 0 ){
+				printf( "OK\n>" );
+			}else{
+				printf( "NG\n>" );
+			}
+		}/* LN_LOOP_GET */
+		else if( strncmp( buf, CMD_LNLOOP_GET, strlen(CMD_LNLOOP_GET) ) == 0 ){
+			DSP_LOOP_INFO info;
+			printf( "Output line loopback information." );
+			ret = dsp_ln_loopback_get( context, &info );
+			if( ret == 0 ){
+				printf( "OK\n>" );
+				dsp_lnloop_info( &info );
+			}else{
+				printf( "NG\n>" );
+			}
+		}/* CL_LOOP_GET */
+		else if( strncmp( buf, CMD_CLLOOP_GET, strlen(CMD_CLLOOP_GET) ) == 0 ){
+			DSP_LOOP_INFO info;
+			printf( "Output client loopback information." );
+			ret = dsp_cl_loopback_get( context, &info );
+			if( ret == 0 ){
+				printf( "OK\n>" );
+				dsp_clloop_info( &info );
+			}else{
+				printf( "NG\n>" );
+			}
+		}/* Status Check */
+		else if( strncmp( buf, CMD_STATUS_CHECK, strlen(CMD_STATUS_CHECK) ) == 0 ){
+			printf( "Status check.\n" );
+			ret = dsp_status_check( context, &status_check_info );
+			if( ret == 0 ){
+				dsp_status_check_info( &status_check_info );
+			}
+			printf(">");
+		}/* ADC CAL */
+		else if( strncmp( buf, CMD_ADC_CAL, strlen(CMD_ADC_CAL) ) == 0 ){
+			printf( "ADC cal.\n" );
+			dsp_adc_cal_set( context );
+			reg_read_info( context, 0x00002410 );
+			reg_read_info( context, 0x00002414 );
+			printf( ">" );
+		}/* ADC Background Cal ON */
+		else if( strncmp( buf, CMD_ADC_BG_CAL_ON, strlen(CMD_ADC_BG_CAL_ON) ) == 0 ){
+			printf( "ADC background cal ON.\n" );
+			dsp_adc_bgcal_set( context, 1 );
+			printf( ">" );
+		}/* ADC Background Cal OFF */
+		else if( strncmp( buf, CMD_ADC_BG_CAL_OFF, strlen(CMD_ADC_BG_CAL_OFF) ) == 0 ){
+			printf( "ADC background cal OFF.\n" );
+			dsp_adc_bgcal_set( context, 0 );
+			printf( ">" );
+		}
+		/* Log Level set */
+		else if( strncmp( buf, CMD_LOGLV_SET, strlen(CMD_LOGLV_SET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_LOGLV_SET), " %d", &val );
+			printf( "log_level_set. %d ", val );
+			if( ret != 1 ){
+				val = DEBUG;
+			}
+			ret = dsp_log_level_set( context, val );
+			if( ret == 0 ){
+				if(      val >= DEBUG   ){ printf("DEBUG");   }
+				else if( val == INFO    ){ printf("INFO");    }
+				else if( val == NOTICE  ){ printf("NOTICE");  }
+				else if( val == WARNING ){ printf("WARNING"); }
+				else if( val == ERR     ){ printf("ERR");     }
+				else if( val == CRIT    ){ printf("CRIT");    }
+				else if( val == ALERT   ){ printf("ALERT");   }
+				else if( val == EMERG   ){ printf("EMERG");   }
+				printf( " OK\n>" );
+			}else{
+				printf( " NG\n>" );
+			}
+		}/* Version */
+		else if( strncmp( buf, CMD_VER, strlen(CMD_VER) ) == 0 ){
+			ver_get_info( context );
+			printf(">");
+		}
+		/* AVS reg set */
+		else if( strncmp( buf, CMD_AVS_REG_SET, strlen(CMD_AVS_REG_SET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_AVS_REG_SET), " %d 0x%02x", &prm1, &prm2 );
+			printf( "AVS regulator set... " );
+			if( ret ==2 ){
+				ret = dsp_avs_reg_set( context, (U8)prm1, (U8)prm2 );
+				if( ret == 0 ){
+					printf( "OK\n>" );
+				}else{
+					printf( "NG\n>" );
+				}
+			}else{
+				printf( "parameter error\n>" );
+			}
+		}/* TJ monitor on */
+		else if( strncmp( buf, CMD_TJ_MON_SET_ON, strlen(CMD_TJ_MON_SET_ON) ) == 0 ){
+			printf( "TJ monitor set ON... " );
+			ret = dsp_tj_mon_set( context, 1 );
+			if( ret == 0 ){
+				printf( "OK\n>" );
+			}else{
+				printf( "NG\n>" );
+			}
+		}/* TJ monitor off */
+		else if( strncmp( buf, CMD_TJ_MON_SET_OFF, strlen(CMD_TJ_MON_SET_OFF) ) == 0 ){
+			printf( "TJ monitor set OFF... " );
+			ret = dsp_tj_mon_set( context, 0 );
+			if( ret == 0 ){
+				printf( "OK\n>" );
+			}else{
+				printf( "NG\n>" );
+			}
+		}/* TJ monitor */
+		else if( strncmp( buf, CMD_TJ_MON_GET, strlen(CMD_TJ_MON_GET) ) == 0 ){
+			printf( "TJ monitor get. " );
+			ret = dsp_tj_mon_get( context, &tj_mon );
+			if( ret == 0 ){
+				printf( "OK\n" );
+				dsp_tj_mon_info( &tj_mon );
+			}else{
+				printf( "NG\n" );
+			}
+			printf( ">" );
+		}/* AVS monitor */
+		else if( strncmp( buf, CMD_AVS_MON_GET, strlen(CMD_AVS_MON_GET) ) == 0 ){
+			printf( "AVS monitor get. " );
+			ret = dsp_avs_mon_get( context, &avs_mon );
+			if( ret == 0 ){
+				printf( "OK\n" );
+				dsp_avs_mon_info( &avs_mon );
+			}else{
+				printf( "NG\n" );
+			}
+			printf( ">" );
+		}/* Tx coarse skew set */
+		else if( strncmp( buf, CMD_TX_SKEW_CRS_SET, strlen(CMD_TX_SKEW_CRS_SET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_TX_SKEW_CRS_SET), " %d %d %d %d", &prm1, &prm2, &prm3, &prm4 );
+			if( ret == 4 ){
+				printf( "Tx coarse skew setting... " );
+				fflush(stdout);
+				tx_crs_skew.skew_xi = (U16)prm1;
+				tx_crs_skew.skew_xq = (U16)prm2;
+				tx_crs_skew.skew_yi = (U16)prm3;
+				tx_crs_skew.skew_yq = (U16)prm4;
+				ret = dsp_tx_coarse_skew_set( context, &tx_crs_skew );
+				if( ret == 0 ){
+					printf( "OK\n" );
+				}else{
+					printf( "NG\n" );
+				}
+			}else{
+				printf( "Parameter NG\n" );
+			}
+			printf( ">" );
+		}/* Tx fine skew set */
+		else if( strncmp( buf, CMD_TX_SKEW_FINE_SET, strlen(CMD_TX_SKEW_FINE_SET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_TX_SKEW_FINE_SET), " %d %d %d %d", &prm1, &prm2, &prm3, &prm4 );
+			if( ret == 4 ){
+				printf( "Tx fine skew setting... " );
+				fflush(stdout);
+				tx_fine_skew.skew_xi = (S16)prm1;
+				tx_fine_skew.skew_xq = (S16)prm2;
+				tx_fine_skew.skew_yi = (S16)prm3;
+				tx_fine_skew.skew_yq = (S16)prm4;
+				ret = dsp_tx_fine_skew_set( context, &tx_fine_skew );
+				if( ret == 0 ){
+					printf( "OK\n" );
+				}else{
+					printf( "NG\n" );
+				}
+			}else{
+				printf( "Parameter NG\n" );
+			}
+			printf( ">" );
+		}/* Rx coarse skew set */
+		else if( strncmp( buf, CMD_RX_SKEW_CRS_SET, strlen(CMD_RX_SKEW_CRS_SET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_RX_SKEW_CRS_SET), " %d %d %d %d", &prm1, &prm2, &prm3, &prm4 );
+			if( ret == 4 ){
+				printf( "Rx coarse skew setting... " );
+				fflush(stdout);
+				rx_crs_skew.skew_xi = (U16)prm1;
+				rx_crs_skew.skew_xq = (U16)prm2;
+				rx_crs_skew.skew_yi = (U16)prm3;
+				rx_crs_skew.skew_yq = (U16)prm4;
+				ret = dsp_rx_coarse_skew_set( context, &rx_crs_skew );
+				if( ret == 0 ){
+					printf( "OK\n" );
+				}else{
+					printf( "NG\n" );
+				}
+			}else{
+				printf( "Parameter NG\n" );
+			}
+			printf( ">" );
+		}/* Rx fine skew set */
+		else if( strncmp( buf, CMD_RX_SKEW_FINE_SET, strlen(CMD_RX_SKEW_FINE_SET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_RX_SKEW_FINE_SET), " %d %d %d %d", &prm1, &prm2, &prm3, &prm4 );
+			if( ret == 4 ){
+				printf( "Rx fine skew setting... " );
+				fflush(stdout);
+				rx_fine_skew.skew_xi = (S16)prm1;
+				rx_fine_skew.skew_xq = (S16)prm2;
+				rx_fine_skew.skew_yi = (S16)prm3;
+				rx_fine_skew.skew_yq = (S16)prm4;
+				ret = dsp_rx_fine_skew_set( context, &rx_fine_skew );
+				if( ret == 0 ){
+					printf( "OK\n" );
+				}else{
+					printf( "NG\n" );
+				}
+			}else{
+				printf( "Parameter NG\n" );
+			}
+			printf( ">" );
+		}/* TxEQL Amp set */
+		else if( strncmp( buf, CMD_TX_EQL_AMP_SET, strlen(CMD_TX_EQL_AMP_SET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_TX_EQL_AMP_SET), " %d %d %d %d", &prm1, &prm2, &prm3, &prm4 );
+			if( ret == 4 ){
+				printf( "TxEQL amp setting... " );
+				fflush(stdout);
+				txeql_amp.amp_xi = (U16)prm1;
+				txeql_amp.amp_xq = (U16)prm2;
+				txeql_amp.amp_yi = (U16)prm3;
+				txeql_amp.amp_yq = (U16)prm4;
+				ret = dsp_txeql_amp_set( context, &txeql_amp );
+				if( ret == 0 ){
+					printf( "OK\n" );
+				}else{
+					printf( "NG\n" );
+				}
+			}else{
+				printf( "Parameter NG\n" );
+			}
+			printf( ">" );
+		}/* TxEQL Tap set */
+		else if( strncmp( buf, CMD_TX_EQL_TAP_SET, strlen(CMD_TX_EQL_TAP_SET) ) == 0 ){
+			ret = sscanf( buf+ strlen(CMD_TX_EQL_TAP_SET), " -f %s", file );
+			if( ret >= 1 ){
+				printf( "TxEQL tap setting... " );
+				fflush( stdout );
+				ret = dsp_txeql_tap_set_f( context, file );
+			}
+			if( ret == 0 ){
+				printf("OK\n>");
+			}else{
+				printf("NG\n>");
+			}
+		}/* Tx Coarse skew get */
+		else if( strncmp( buf, CMD_TX_SKEW_CRS_GET, strlen(CMD_TX_SKEW_CRS_GET) ) == 0 ){
+			printf( "Tx coarse skew get... " );
+			fflush( stdout );
+			ret = dsp_tx_coarse_skew_get( context, &tx_crs_skew );
+			if( ret == 0 ){
+				printf("OK\n");
+				printf(" TxCoarseSkew-Xi    : %+d [sample]\n", tx_crs_skew.skew_xi);
+				printf(" TxCoarseSkew-Xq    : %+d [sample]\n", tx_crs_skew.skew_xq);
+				printf(" TxCoarseSkew-Yi    : %+d [sample]\n", tx_crs_skew.skew_yi);
+				printf(" TxCoarseSkew-Yq    : %+d [sample]\n", tx_crs_skew.skew_yq);
+				printf(">");
+			}else{
+				printf("NG\n>");
+			}
+		}/* Tx fine skew get */
+		else if( strncmp( buf, CMD_TX_SKEW_FINE_GET, strlen(CMD_TX_SKEW_FINE_GET) ) == 0 ){
+			printf( "Tx fine skew get... " );
+			fflush( stdout );
+			ret = dsp_tx_fine_skew_get( context, &tx_fine_skew );
+			if( ret == 0 ){
+				printf("OK\n");
+				printf(" TxFineSkew-Xi      : %+0.1f [ps]\n", (((double)tx_fine_skew.skew_xi) / 10) );
+				printf(" TxFineSkew-Xq      : %+0.1f [ps]\n", (((double)tx_fine_skew.skew_xq) / 10) );
+				printf(" TxFineSkew-Yi      : %+0.1f [ps]\n", (((double)tx_fine_skew.skew_yi) / 10) );
+				printf(" TxFineSkew-Yq      : %+0.1f [ps]\n", (((double)tx_fine_skew.skew_yq) / 10) );
+				printf(">");
+			}else{
+				printf("NG\n>");
+			}
+		}/* Rx coarse skew get */
+		else if( strncmp( buf, CMD_RX_SKEW_CRS_GET, strlen(CMD_RX_SKEW_CRS_GET) ) == 0 ){
+			printf( "Rx coarse skew get... " );
+			fflush( stdout );
+			ret = dsp_rx_coarse_skew_get( context, &rx_crs_skew );
+			if( ret == 0 ){
+				printf("OK\n");
+				printf(" RxCoarseSkew-Xi    : %+d [sample]\n", rx_crs_skew.skew_xi);
+				printf(" RxCoarseSkew-Xq    : %+d [sample]\n", rx_crs_skew.skew_xq);
+				printf(" RxCoarseSkew-Yi    : %+d [sample]\n", rx_crs_skew.skew_yi);
+				printf(" RxCoarseSkew-Yq    : %+d [sample]\n", rx_crs_skew.skew_yq);
+				printf(">");
+			}else{
+				printf("NG\n>");
+			}
+		}/* Rx fine skew get */
+		else if( strncmp( buf, CMD_RX_SKEW_FINE_GET, strlen(CMD_RX_SKEW_FINE_GET) ) == 0 ){
+			printf( "Rx fine skew get... " );
+			fflush( stdout );
+			ret = dsp_rx_fine_skew_get( context, &rx_fine_skew );
+			if( ret == 0 ){
+				printf("OK\n");
+				printf(" RxFineSkew-Xi      : %+d/512 [sample]\n", rx_fine_skew.skew_xi );
+				printf(" RxFineSkew-Xq      : %+d/512 [sample]\n", rx_fine_skew.skew_xq );
+				printf(" RxFineSkew-Yi      : %+d/512 [sample]\n", rx_fine_skew.skew_yi );
+				printf(" RxFineSkew-Yq      : %+d/512 [sample]\n", rx_fine_skew.skew_yq );
+				printf(">");
+			}else{
+				printf("NG\n>");
+			}
+		}/* TxEQL amp get */
+		else if( strncmp( buf, CMD_TX_EQL_AMP_GET, strlen(CMD_TX_EQL_AMP_GET) ) == 0 ){
+			printf( "Tx EQL amp get... " );
+			fflush( stdout );
+			ret = dsp_txeql_amp_get( context, &txeql_amp );
+			if( ret == 0 ){
+				printf("OK\n");
+				printf(" TxEQL-Amp-Xi       : %+d \n", txeql_amp.amp_xi);
+				printf(" TxEQL-Amp-Xq       : %+d \n", txeql_amp.amp_xq);
+				printf(" TxEQL-Amp-Yi       : %+d \n", txeql_amp.amp_yi);
+				printf(" TxEQL-Amp-Yq       : %+d \n", txeql_amp.amp_yq);
+				printf(">");
+			}else{
+				printf("NG\n>");
+			}
+		}/* TxEql tap get */
+		else if( strncmp( buf, CMD_TX_EQL_TAP_GET, strlen(CMD_TX_EQL_TAP_GET) ) == 0 ){
+			ret = sscanf( buf+ strlen(CMD_TX_EQL_TAP_SET), " %s", file );
+			if( ret >= 1 ){
+				printf( "Tx EQL tap get... " );
+				fflush( stdout );
+				ret = dsp_txeql_tap_get_f( context, file );
+				if( ret == 0 ){
+					printf("OK\n>");
+				}else{
+					printf("NG\n>");
+				}
+			}else{
+				printf("NG\n>");
+			}
+		}/* TxEQL bypass on */
+		else if( strncmp( buf, CMD_TX_EQL_BYPS_ON, strlen(CMD_TX_EQL_BYPS_ON) ) == 0 ){
+			printf( "TxEQL bypass ON... " );
+			ret = dsp_txeql_bypass_set( context, BYPASS_ON );
+			if( ret == 0 ){
+				printf("OK\n>");
+			}else{
+				printf("NG\n>");
+			}
+		}/* TxEql bypass off */
+		else if( strncmp( buf, CMD_TX_EQL_BYPS_OFF, strlen(CMD_TX_EQL_BYPS_OFF) ) == 0 ){
+			printf( "TxEQL bypass OFF... " );
+			ret = dsp_txeql_bypass_set( context, BYPASS_OFF );
+			if( ret == 0 ){
+				printf("OK\n>");
+			}else{
+				printf("NG\n>");
+			}
+		}/* Tx bypass/through set */
+		else if( strncmp( buf, CMD_TX_BYPS_THRU_SET, strlen(CMD_TX_BYPS_THRU_SET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_TX_BYPS_THRU_SET), " %d %d %d %d", &prm1, &prm2, &prm3, &prm4 );
+			if( ret == 4 ){
+				printf( "TxEQL bypass parameter setting... " );
+				fflush(stdout);
+				tx_bypass.eql_bypass = (U8)prm1;
+				tx_bypass.lin_bypass = (U8)prm2;
+				tx_bypass.fc_bypass  = (U8)prm3;
+				tx_bypass.tss_bypass = (U8)prm4;
+				ret = dsp_tx_bypass_thru_set( context, &tx_bypass );
+				if( ret == 0 ){
+					printf( "OK\n" );
+				}else{
+					printf( "NG\n" );
+				}
+			}else{
+				printf( "Parameter NG\n" );
+			}
+			printf( ">" );
+		}/* Tx bypass/through get */
+		else if( strncmp( buf, CMD_TX_BYPS_THRU_GET, strlen(CMD_TX_BYPS_THRU_GET) ) == 0 ){
+			printf( "Tx EQL bypass parameter get... " );
+			fflush( stdout );
+			ret = dsp_tx_bypass_thru_get( context, &tx_bypass );
+			if( ret == 0 ){
+				printf("OK\n");
+				printf(" Tx-EQL-Bypass    : %d \n", tx_bypass.eql_bypass);
+				printf(" Tx-Lin-Bypass    : %d \n", tx_bypass.lin_bypass);
+				printf(" Tx-FC-Bypass     : %d \n", tx_bypass.fc_bypass);
+				printf(" Tx-TSS-Bypass    : %d \n", tx_bypass.tss_bypass);
+				printf(">");
+			}else{
+				printf("NG\n>");
+			}
+		}
+		/* Line PRBS on */
+		else if( strncmp( buf, CMD_LINE_PRBS_ON, strlen(CMD_LINE_PRBS_ON) ) == 0 ){
+			printf( "Tx Line PRBS ON... " );
+			ret = dsp_line_prbs_set( context, OUTPUT_ON, PRBS_PTN_31 );
+			if( ret == 0 ){
+				printf("OK\n>");
+			}else{
+				printf("NG\n>");
+			}
+		}/* Line PRBS off */
+		else if( strncmp( buf, CMD_LINE_PRBS_OFF, strlen(CMD_LINE_PRBS_OFF) ) == 0 ){
+			printf( "Tx Line PRBS OFF... " );
+			ret = dsp_line_prbs_set( context, OUTPUT_OFF, 0 );
+			if( ret == 0 ){
+				printf("OK\n>");
+			}else{
+				printf("NG\n>");
+			}
+		}/* Tx MCLK output on */
+		else if( strncmp( buf, CMD_TX_MCLK_OUT_ON, strlen(CMD_TX_MCLK_OUT_ON) ) == 0 ){
+			ret = sscanf( buf+sizeof(CMD_TX_MCLK_OUT_ON), " %d", &prm1 );
+			if(ret != 1){
+				prm1 = 0;
+			}
+			printf( "Txo MCLK output ON... " );
+			ret = dsp_tx_mclk_set( context, OUTPUT_ON, prm1 );
+			if( ret == 0 ){
+				printf("OK\n>");
+			}else{
+				printf("NG\n>");
+			}
+		}/* Tx MCLK output off */
+		else if( strncmp( buf, CMD_TX_MCLK_OUT_OFF, strlen(CMD_TX_MCLK_OUT_OFF) ) == 0 ){
+			printf( "Txo MCLK output OFF... " );
+			ret = dsp_tx_mclk_set( context, OUTPUT_OFF, 0 );
+			if( ret == 0 ){
+				printf("OK\n>");
+			}else{
+				printf("NG\n>");
+			}
+		}/* DC offset bypass on */
+		else if( strncmp( buf, CMD_DC_OFST_BYPS_ON, strlen(CMD_DC_OFST_BYPS_ON) ) == 0 ){
+			printf( "DC offset bypass ON... " );
+			ret = dsp_dc_offset_bypass_set( context, BYPASS_ON );
+			if( ret == 0 ){
+				printf("OK\n>");
+			}else{
+				printf("NG\n>");
+			}
+		}/* DC offset bypass off */
+		else if( strncmp( buf, CMD_DC_OFST_BYPS_OFF, strlen(CMD_DC_OFST_BYPS_OFF) ) == 0 ){
+			printf( "DC offset bypass OFF... " );
+			ret = dsp_dc_offset_bypass_set( context, BYPASS_OFF );
+			if( ret == 0 ){
+				printf("OK\n>");
+			}else{
+				printf("NG\n>");
+			}
+		}
+#if AUTO_CAL_EN==1
+		/* AutoCal detect ON */
+		else if( strncmp( buf, CMD_AUTO_CAL_ON, strlen(CMD_AUTO_CAL_ON) ) == 0 ){
+			printf( "AutoCal detect ON... " );
+			fflush( stdout );
+			ret = dsp_auto_cal_detect( context, 1 );
+			if( ret == 0 ){
+				printf("start OK\n>");
+			}else{
+				printf("NG\n>");
+			}
+		}/* AutoCal detect OFF */
+		else if( strncmp( buf, CMD_AUTO_CAL_OFF, strlen(CMD_AUTO_CAL_OFF) ) == 0 ){
+			printf( "AutoCal detect OFF... " );
+			fflush( stdout );
+			ret = dsp_auto_cal_detect( context, 0 );
+			if( ret == 0 ){
+				printf("OK\n>");
+			}else{
+				printf("NG\n>");
+			}
+		}
+		/* AutoCal init */
+		else if( strncmp( buf, CMD_AUTO_CAL_INIT, strlen(CMD_AUTO_CAL_INIT) ) == 0 ){
+			printf( "AutoCal init... " );
+			fflush( stdout );
+			ret = dsp_auto_cal_init( context );
+			if( ret == 0 ){
+				printf("OK\n>");
+			}else{
+				printf("NG\n>");
+			}
+		}/* AutoCal CFP2ACO existence check */
+		else if( strncmp( buf, CMD_CFP_EXT_CHK, strlen(CMD_CFP_EXT_CHK) ) == 0 ){
+			printf( "CFP2ACO existence check... " );
+			fflush( stdout );
+			ret = udsp_cfp_ext_chk( context );
+			if( ret == 1 ){
+				printf("CFP2ACO mounted\n>");
+			}else if( ret == 0 ){
+				printf("CFP2ACO unmounted\n>");
+			}else{
+				printf("check NG\n>");
+			}
+		}/* AutoCal exe */
+		else if( strncmp( buf, CMD_AUTO_CAL_EXE, strlen(CMD_AUTO_CAL_EXE) ) == 0 ){
+			printf( "Aco calibrate and setting parameter... " );
+			fflush( stdout );
+			ret = dsp_auto_cal_exe( context );
+			if( ret == 0 ){
+				printf("OK\n>");
+			}else{
+				printf("NG\n>");
+			}
+		}
+#endif
+		/* RAM1 Capture */
+		else if( strncmp( buf, CMD_RAM1_CAPTURE, strlen(CMD_RAM1_CAPTURE) ) == 0 ){
+			ret = sscanf( buf+ strlen(CMD_RAM1_CAPTURE), " %d %s", &prm1, file );
+			if( ret >= 2 ){
+				printf( "RAM1 capture start... " );
+				fflush( stdout );
+				ret = dsp_ram1_capture( context, (U16)prm1, file );
+				if( ret == 0 ){
+					printf("OK\n>");
+				}else{
+					printf("NG\n>");
+				}
+			}else{
+				printf("NG\n>");
+			}
+		}/* RAM3 Capture */
+		else if( strncmp( buf, CMD_RAM3_CAPTURE, strlen(CMD_RAM3_CAPTURE) ) == 0 ){
+			ret = sscanf( buf+ strlen(CMD_RAM3_CAPTURE), " %d %s", &prm1, file );
+			if( ret >= 2 ){
+				printf( "RAM3 capture start... " );
+				fflush( stdout );
+				ret = dsp_ram3_capture( context, (U16)prm1, file );
+				if( ret == 0 ){
+					printf("OK\n>");
+				}else{
+					printf("NG\n>");
+				}
+			}else{
+				printf("NG\n>");
+			}
+		}/* RAM7 Insert */
+		else if( strncmp( buf, CMD_RAM7_INSERT, strlen(CMD_RAM7_INSERT) ) == 0 ){
+			ret = sscanf( buf+ strlen(CMD_RAM7_INSERT), " %d %s", &prm1, file );
+			if( ret >= 2 ){
+				printf( "RAM7 insert start... " );
+				fflush( stdout );
+				ret = dsp_ram7_insert( context, (U16)prm1, file );
+				if( ret == 0 ){
+					printf("OK\n>");
+				}else{
+					printf("NG\n>");
+				}
+			}else{
+				printf("NG\n>");
+			}
+		}/* RAM7 Insert off */
+		else if( strncmp( buf, CMD_RAM7_INSERT_OFF, strlen(CMD_RAM7_INSERT_OFF) ) == 0 ){
+			printf( "RAM7 insert off.. " );
+			fflush( stdout );
+			ret = dsp_ram7_insert_off( context );
+			if( ret == 0 ){
+				printf("OK\n>");
+			}else{
+				printf("NG\n>");
+			}
+		}/* CntClk check */
+		else if( strncmp( buf, CMD_CNT_CLK_CHK, strlen(CMD_CNT_CLK_CHK) ) == 0 ){
+			printf( "CntCLK check.. " );
+			fflush( stdout );
+			ret = dsp_cnt_clk_check( context );
+			if( (ret == 0) ){
+				printf("OK\n>");
+			}else{
+				printf("NG\n>");
+			}
+		}/* PLL unlock check */
+		else if( strncmp( buf, CMD_PLL_UNLOCK_CHK, strlen(CMD_PLL_UNLOCK_CHK) ) == 0 ){
+			printf( "PLL unlock check" );
+			fflush( stdout );
+			ret = dsp_pll_unlock_check( context, &pll_unlock );
+			if( ret == 0 ){
+				printf("OK\n");
+				pll_unlock_mon( context, &pll_unlock );
+				printf(">");
+			}else{
+				printf("NG\n>");
+			}
+		}
+//Monitor
+		else if( strncmp( buf, CMD_CD_GET, strlen(CMD_CD_GET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_CD_GET), " %lf", &dprm );
+			if( ret != 1 ){
+				printf( "parameter error. #>cd_get [wavelength]\n" );
+				printf( ">" );
+			}else{
+				ret = dsp_cd_get( context, dprm, &cd );
+				if( ret == 0 ){
+					printf(" CD Get... OK\n");
+					printf(" CD value        : %lf [ps/nm]\n", cd.cd);
+
+				}else{
+					printf(" CD Get... NG\n");
+				}
+				printf( ">" );
+			}
+		}
+		else if( strncmp( buf, CMD_DGD_GET, strlen(CMD_DGD_GET) ) == 0 ){
+			printf( " DGD Get... " );
+			fflush(stdout);
+			ret = dsp_dgd_get( context, &dgd );
+			if( ret == 0 ){
+				printf( "OK\n" );
+				printf( " DGD value       : %d [ps]\n", dgd.dgd );
+			}else{
+				printf( "NG\n" );
+			}
+			printf( ">" );
+		}
+		else if( strncmp( buf, CMD_QFACT_GET, strlen(CMD_QFACT_GET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_QFACT_GET), " %d", &prm1 );
+			if( ret != 1 ){
+				printf( "parameter error. #>qfact_get [time]\n" );
+				printf( ">" );
+			}else{
+				printf( " Q-Factor Get... " );
+				fflush(stdout);
+				ret = dsp_qfact_get( context, prm1, &qfact );
+				if( ret == 0 ){
+					printf( "OK\n" );
+					printf( " Q-Factor value  : %lf [dB]\n", qfact.q_factor );
+				}else{
+					printf( "NG\n" );
+				}
+				printf( ">" );
+			}
+		}
+		else if( strncmp( buf, CMD_FOFFSET_GET, strlen(CMD_FOFFSET_GET) ) == 0 ){
+			printf( " FOffset Get... " );
+			fflush(stdout);
+			ret = dsp_foffset_get( context, &foffset );
+			if( ret == 0 ){
+				printf( "OK\n" );
+				printf( " FOffset value   : %lf [GHz]\n", foffset.foffset_val );
+			}else{
+				printf( "NG\n" );
+			}
+			printf( ">" );
+		}
+
+#if (HWLIB_NEL_SAMPLE==NEL_EVB) || (HWLIB_NEL_SAMPLE==EVB_1)
+		/* HW Setup */
+		else if( strncmp( buf, CMD_HW_SETUP, strlen(CMD_HW_SETUP) ) == 0 ){
+			printf( "Hw_setup... " );
+			fflush(stdout);
+			ret = udsp_hw_setup( context );
+			if( ret != 0 ){
+				printf( "NG\n" );
+			}else{
+				printf( "OK\n" );
+			}
+			printf(">");
+		}/* HW Down */
+		else if( strncmp( buf, CMD_HW_DOWN, strlen(CMD_HW_DOWN) ) == 0 ){
+			printf( "hw_down. ok ? (y or n) >" );
+			ret = getchar();
+			if( ret == 'n' ){
+				printf("continue\n>");
+				fgets( buf, sizeof(buf), stdin );
+				continue;
+			}
+			fgets( buf, sizeof(buf), stdin );
+			printf( "Hw_down." );
+			ret = udsp_hw_down( context );
+			if( ret == 0 ){
+				printf( "OK\n>" );
+			}else{
+				printf( "NG\n>" );
+			}
+		}/* Macro setup */
+		else if( strncmp( buf, CMD_MACRO_SETUP, strlen(CMD_MACRO_SETUP) ) == 0 ){
+			printf( "Macro_setup... " );
+			fflush(stdout);
+			ret = dsp_macro_setup( context );
+			printf("\n");
+			reg_read_info( context, 0x00002304 );
+			reg_read_info( context, 0x00002300 );
+			reg_read_info( context, 0x00002300 );
+			reg_read_info( context, 0x00002300 );
+			reg_read_info( context, 0x00002300 );
+			reg_read_info( context, 0x00000d50 );
+			printf(">");
+		}/* Line - CFP_Bringup */
+		else if( strncmp( buf, CMD_CFP_BRINGUP, strlen(CMD_CFP_BRINGUP) ) == 0 ){
+			printf( "Cfp_bringup... " );
+			fflush(stdout);
+			udsp_cfp_bringup( context );
+			printf( "OK\n>" );
+		}/* Client - QSFP_Bringup */
+		else if( strncmp( buf, CMD_QSFP_BRINGUP, strlen(CMD_QSFP_BRINGUP) ) == 0 ){
+			printf( "Qsfp_bringup... " );
+			fflush(stdout);
+			udsp_qsfp_bringup( context );
+			printf( "OK\n>" );
+		}/* Test EQL Set */
+		else if( strncmp( buf, CMD_TEST_EQL_SET, strlen(CMD_TEST_EQL_SET) ) == 0 ){
+			printf( "EQL_set start... " );
+			fflush(stdout);
+			udsp_test_eql_set( context );
+			printf("OK\n>");
+		}
+		/* CFP2ACO reg read */
+		else if( (strncmp( buf, CMD_CFP_REG_READ, strlen(CMD_CFP_REG_READ) ) == 0) && (buf[strlen(CMD_CFP_REG_READ)]==' ') ){
+			ret = sscanf( buf+strlen(CMD_CFP_REG_READ), " %8X", &addr );
+			if( ret == 1 ){
+				printf( "CFP2ACO reg_read." );
+				ret = udsp_cfp_reg_read( context, addr, (U16*)(&val) );
+				if( ret == 0 ){
+					printf( "%08x = %04X.", addr, val );
+					printf( "OK\n>" );
+				}else{
+					printf( "NG\n>" );
+				}
+			}else{
+				printf( " param error\n>" );
+			}
+		}/* CFP2ACO reg write */
+		else if( (strncmp( buf, CMD_CFP_REG_WRITE, strlen(CMD_CFP_REG_WRITE) ) == 0) && (buf[strlen(CMD_CFP_REG_WRITE)]==' ') ){
+			ret = sscanf( buf+strlen(CMD_CFP_REG_WRITE), " %4X %4X", &addr, &val );
+			if( ret == 2 ){
+				printf( "CFP2ACO reg_write." );
+				ret = udsp_cfp_reg_write( context, addr, (U16)val );
+				if( ret == 0 ){
+					printf( "%04x = %04X.", addr, val );
+					printf( "OK\n>" );
+				}else{
+					printf( "NG\n>" );
+				}
+			}else{
+				printf( " param error\n>" );
+			}
+		}/* QSFP A reg read */
+		else if( (strncmp( buf, CMD_QSFP_REG_READ_A, strlen(CMD_QSFP_REG_READ_A) ) == 0) && (buf[strlen(CMD_QSFP_REG_READ_A)]==' ') ){
+			ret = sscanf( buf+strlen(CMD_QSFP_REG_READ_A), " %2X", &addr );
+			if( ret == 1 ){
+				printf( "QSFP28 reg_read.(ch:A) " );
+				ret = udsp_qsfp_reg_read( context, CH_A, (addr<<8), &val );
+				if( ret == 0 ){
+					printf( "%02x = %02X.", addr, val );
+					printf( "OK\n>" );
+				}else{
+					printf( "NG\n>" );
+				}
+			}else{
+				printf( " param error\n>" );
+			}
+		}/* QSFP A reg write */
+		else if( (strncmp( buf, CMD_QSFP_REG_WRITE_A, strlen(CMD_QSFP_REG_WRITE_A) ) == 0) && (buf[strlen(CMD_QSFP_REG_WRITE_A)]==' ') ){
+			ret = sscanf( buf+strlen(CMD_QSFP_REG_WRITE_A), " %2X %2X", &addr, &val );
+			if( ret == 2 ){
+				printf( "QSFP28 reg_write.(ch:A) " );
+				ret = udsp_qsfp_reg_write( context, CH_A, (addr<<8), val );
+				if( ret == 0 ){
+					printf( "%02x = %02X.", addr, val );
+					printf( "OK\n>" );
+				}else{
+					printf( "NG\n>" );
+				}
+			}else{
+				printf( " param error\n>" );
+			}
+		}/* QSFP B reg read */
+		else if( (strncmp( buf, CMD_QSFP_REG_READ_B, strlen(CMD_QSFP_REG_READ_B) ) == 0) && (buf[strlen(CMD_QSFP_REG_READ_B)]==' ') ){
+			ret = sscanf( buf+strlen(CMD_QSFP_REG_READ_B), " %2X", &addr );
+			if( ret == 1 ){
+				printf( "QSFP28 reg_read.(ch:B) " );
+				ret = udsp_qsfp_reg_read( context, CH_B, (addr<<8), &val );
+				if( ret == 0 ){
+					printf( "%02x = %02X.", addr, val );
+					printf( "OK\n>" );
+				}else{
+					printf( "NG\n>" );
+				}
+			}else{
+				printf( " param error\n>" );
+			}
+		}/* QSFP B reg write */
+		else if( (strncmp( buf, CMD_QSFP_REG_WRITE_B, strlen(CMD_QSFP_REG_WRITE_B) ) == 0) && (buf[strlen(CMD_QSFP_REG_WRITE_B)]==' ') ){
+			ret = sscanf( buf+strlen(CMD_QSFP_REG_WRITE_B), " %2X %2X", &addr, &val );
+			if( ret == 2 ){
+				printf( "QSFP28 reg_write.(ch:B) " );
+				ret = udsp_qsfp_reg_write( context, CH_B, (addr<<8), val );
+				if( ret == 0 ){
+					printf( "%02x = %02X.", addr, val );
+					printf( "OK\n>" );
+				}else{
+					printf( "NG\n>" );
+				}
+			}else{
+				printf( " param error\n>" );
+			}
+		}
+
+		/* DSP reg read */
+		else if( (strncmp( buf, CMD_DSP_REG_READ, strlen(CMD_DSP_REG_READ) ) == 0) && (buf[strlen(CMD_DSP_REG_READ)]==' ') ){
+			ret = sscanf( buf+strlen(CMD_DSP_REG_READ), " %8X", &addr );
+			if( ret == 1 ){
+				printf( "dsp_reg_read." );
+				ret = dsp_dsp_reg_read( context, addr, &val );
+				if( ret == 0 ){
+					printf( "%08x = %08X.", addr, val );
+					printf( "OK\n>" );
+				}else{
+					printf( "NG\n>" );
+				}
+			}else{
+				printf( " param error\n>" );
+			}
+		}/* DSP reg write */
+		else if( (strncmp( buf, CMD_DSP_REG_WRITE, strlen(CMD_DSP_REG_WRITE) ) == 0) && (buf[strlen(CMD_DSP_REG_WRITE)]==' ') ){
+			ret = sscanf( buf+strlen(CMD_DSP_REG_WRITE), " %8X %8X", &addr, &val );
+			if( ret == 2 ){
+				printf( "dsp_reg_write." );
+				ret = dsp_dsp_reg_write( context, addr, val );
+				if( ret == 0 ){
+					printf( "%08x = %08X.", addr, val );
+					printf( "OK\n>" );
+				}else{
+					printf( "NG\n>" );
+				}
+			}else{
+				printf( " param error\n>" );
+			}
+		}
+		/* reg read */
+		else if( strncmp( buf, "reg_read", strlen("reg_read") ) == 0 ){
+			ret = sscanf( buf+strlen("reg_read"), " %8X", &addr );
+			if( ret == 1 ){
+				printf( "reg_read." );
+				ret = udsp_fpga_reg_read( context, addr, &val );
+				if( ret == 0 ){
+					printf( "%08x = %08X.", addr, val );
+					printf( "OK\n>" );
+				}else{
+					printf( "NG\n>" );
+				}
+			}else{
+				printf( " param error\n>" );
+			}
+		}/* reg write */
+		else if( strncmp( buf, "reg_write", strlen("reg_write") ) == 0 ){
+			ret = sscanf( buf+strlen("reg_write"), " %8X %8X", &addr, &val );
+			if( ret == 2 ){
+				printf( "reg_write." );
+				ret = udsp_fpga_reg_write( context, addr, val );
+				if( ret == 0 ){
+					printf( "%08x = %08X.", addr, val );
+					printf( "OK\n>" );
+				}else{
+					printf( "NG\n>" );
+				}
+			}else{
+				printf( " param error\n>" );
+			}
+		}/* reg read */
+		else if( (strncmp( buf, CMD_REG_READ, strlen(CMD_REG_READ) ) == 0) && (buf[strlen(CMD_REG_WRITE)]==' ') ){
+			ret = sscanf( buf+strlen(CMD_REG_READ), " %8X", &addr );
+			if( ret == 1 ){
+				printf( "reg_read." );
+				if( (addr & 0xFFFF0000) != 0 ){
+					ret = udsp_fpga_reg_read( context, addr, &val );
+				}else{
+					ret = dsp_dsp_reg_read( context, addr, &val );
+				}
+				if( ret == 0 ){
+					printf( "%08x = %08X.", addr, val );
+					printf( "OK\n>" );
+				}else{
+					printf( "NG\n>" );
+				}
+			}else{
+				printf( " param error\n>" );
+			}
+		}/* reg write */
+		else if( (strncmp( buf, CMD_REG_WRITE, strlen(CMD_REG_WRITE) ) == 0) && (buf[strlen(CMD_REG_WRITE)]==' ') ){
+			ret = sscanf( buf+strlen(CMD_REG_WRITE), " %8X %8X", &addr, &val );
+			if( ret == 2 ){
+				printf( "reg_write." );
+				if( (addr & 0xFFFF0000) != 0 ){
+					ret = udsp_fpga_reg_write( context, addr, val );
+				}else{
+					ret = dsp_dsp_reg_write( context, addr, val );
+				}
+				if( ret == 0 ){
+					printf( "%08x = %08X.", addr, val );
+					printf( "OK\n>" );
+				}else{
+					printf( "NG\n>" );
+				}
+			}else{
+				printf( " param error\n>" );
+			}
+		}
+#endif
+//AVS test
+		/* AVS reg read [addr] [cmd] [size] [pec] */
+		else if( strncmp( buf, "avs_reg_read", strlen("avs_reg_read") ) == 0 ){
+			ret = sscanf( buf+strlen("avs_reg_read"), " %x %x %d %d", &prm1, &prm2, &prm3, &prm4 );
+			if( ret != 4 ){
+				printf( "parameter error. #>avs_reg_read [addr] [cmd] [size] [pec]\n>" );
+			}else{
+				printf( "avs_reg_read.. " );
+				fflush(stdout);
+				ret = dsp_avs_reg_read( context, prm1, prm2, prm3, prm4, &val );
+				if( ret == 0 ){
+					printf( "OK : data=%08x\n>", val );
+				}else{
+					printf( "NG\n>" );
+				}
+			}
+		}/* AVS reg write [addr] [cmd] [size] [pec] [data] */
+		else if( strncmp( buf, "avs_reg_write", strlen("avs_reg_write") ) == 0 ){
+			ret = sscanf( buf+strlen("avs_reg_write"), " %x %x %d %d %x", &prm1, &prm2, &prm3, &prm4, &val );
+			if( ret != 5 ){
+				printf( "parameter error. #>avs_reg_write [addr] [cmd] [size] [pec] [data]\n>" );
+			}else{
+				printf( "avs_reg_write.. " );
+				fflush(stdout);
+				ret = dsp_avs_reg_write( context, prm1, prm2, prm3, prm4, val );
+				if( ret == 0 ){
+					printf( "OK\n>" );
+				}else{
+					printf( "NG\n>" );
+				}
+			}
+		}/* AVS regulator init set */
+		else if( strncmp( buf, "avs_reg_init_set", strlen("avs_reg_init_set") ) == 0 ){
+			ret = sscanf( buf+strlen("avs_reg_init_set"), " %d", &prm1 );
+			if( ret != 1 ){
+				printf( "parameter error.  #>avs_reg_init_set [init_en]\n>" );
+			}else{
+				ret = dsp_avs_reg_init_set( context, prm1 );
+				if( ret == 0 ){
+					printf( "avs_reg_init_set. OK\n>" );
+				}else{
+					printf( "avs_reg_init_set. NG\n>" );
+				}
+			}
+		}/* AVS regulator pec set */
+		else if( strncmp( buf, "avs_reg_pec_set", strlen("avs_reg_pec_set") ) == 0 ){
+			ret = sscanf( buf+strlen("avs_reg_pec_set"), " %d", &prm1 );
+			if( ret != 1 ){
+				printf( "parameter error.  #>avs_reg_pec_set [pec]\n>" );
+			}else{
+				ret = dsp_avs_reg_pec_set( context, prm1 );
+				if( ret == 0 ){
+					printf( "avs_reg_pec_set. OK\n>" );
+				}else{
+					printf( "avs_reg_pec_set. NG\n>" );
+				}
+			}
+		}
+//Lane swap test
+		/* Lane swap set */
+		else if( strncmp( buf, "txia_lane_swap_set", strlen("txia_lane_swap_set") ) == 0 ){
+			ret = sscanf( buf+strlen("txia_lane_swap_set"), " %d %d %d %d %d", &prm1, &prm2, &prm3, &prm4, &prm5 );
+			if( ret != 5 ){
+				printf( "parameter error.  #>txia_lane_swap_set [order] [inv0] [inv1] [inv2] [inv3]\n>" );
+			}else{
+				ret = dsp_client_txi_lane_swap_set( context, CH_A, prm1, prm2, prm3, prm4, prm5 );
+				if( ret == 0 ){
+					printf( "txia_lane_swap_set. OK\n>" );
+				}else{
+					printf( "txia_lane_swap_set. NG\n>" );
+				}
+			}
+		}/* Lane swap set */
+		else if( strncmp( buf, "txib_lane_swap_set", strlen("txib_lane_swap_set") ) == 0 ){
+			ret = sscanf( buf+strlen("txib_lane_swap_set"), " %d %d %d %d %d", &prm1, &prm2, &prm3, &prm4, &prm5 );
+			if( ret != 5 ){
+				printf( "parameter error.  #>txib_lane_swap_set [order] [inv0] [inv1] [inv2] [inv3]\n>" );
+			}else{
+				ret = dsp_client_txi_lane_swap_set( context, CH_B, prm1, prm2, prm3, prm4, prm5 );
+				if( ret == 0 ){
+					printf( "txib_lane_swap_set. OK\n>" );
+				}else{
+					printf( "txib_lane_swap_set. NG\n>" );
+				}
+			}
+		}/* Lane swap set */
+		else if( strncmp( buf, "rxoa_lane_swap_set", strlen("rxoa_lane_swap_set") ) == 0 ){
+			ret = sscanf( buf+strlen("rxoa_lane_swap_set"), " %d %d %d %d %d", &prm1, &prm2, &prm3, &prm4, &prm5 );
+			if( ret != 5 ){
+				printf( "parameter error.  #>rxoa_lane_swap_set [order] [inv0] [inv1] [inv2] [inv3]\n>" );
+			}else{
+				ret = dsp_client_rxo_lane_swap_set( context, CH_A, prm1, prm2, prm3, prm4, prm5 );
+				if( ret == 0 ){
+					printf( "rxoa_lane_swap_set. OK\n>" );
+				}else{
+					printf( "rxoa_lane_swap_set. NG\n>" );
+				}
+			}
+		}/* Lane swap set */
+		else if( strncmp( buf, "rxob_lane_swap_set", strlen("rxob_lane_swap_set") ) == 0 ){
+			ret = sscanf( buf+strlen("rxob_lane_swap_set"), " %d %d %d %d %d", &prm1, &prm2, &prm3, &prm4, &prm5 );
+			if( ret != 5 ){
+				printf( "parameter error.  #>rxob_lane_swap_set [order] [inv0] [inv1] [inv2] [inv3]\n>" );
+			}else{
+				ret = dsp_client_rxo_lane_swap_set( context, CH_B, prm1, prm2, prm3, prm4, prm5 );
+				if( ret == 0 ){
+					printf( "rxob_lane_swap_set. OK\n>" );
+				}else{
+					printf( "rxob_lane_swap_set. NG\n>" );
+				}
+			}
+		}/* Lane swap set */
+		else if(strncmp(buf, "txi_10lane_inv_set", strlen("txi_10lane_inv_set")) == 0) {
+			DSP_CL_10LANE_INV_DATA in_data;
+			int inv[10];
+			ret = sscanf(buf + strlen("txi_10lane_inv_set"), " %d %d %d %d %d %d %d %d %d %d", &inv[0], &inv[1], &inv[2], &inv[3], &inv[4], &inv[5], &inv[6], &inv[7], &inv[8], &inv[9]);
+			if(ret != 10) {
+				printf("parameter error.  #>txi_10lane_inv_set [inv0] [inv1] [inv2] [inv3] [inv_4] [inv_5] [inv_6] [inv_7] [inv_8] [inv_9]\n>");
+			}
+			else {
+				int index = 0;
+				for( ; index < 10; index++ ) {
+					in_data.lane_inv[index] = (U8)inv[index];
+				}
+				ret = dsp_client_txi_10lane_inv_set( context, &in_data );
+				if(ret == 0) {
+					printf("txi_10lane_inv_set. OK\n>");
+				}
+				else {
+					printf("txi_10lane_inv_set. NG\n>");
+				}
+			}
+		}/* Lane swap set */
+		else if(strncmp(buf, "rxo_10lane_inv_set", strlen("rxo_10lane_inv_set")) == 0) {
+			DSP_CL_10LANE_INV_DATA in_data;
+			int inv[10];
+			ret = sscanf(buf + strlen("rxo_10lane_inv_set"), " %d %d %d %d %d %d %d %d %d %d", &inv[0], &inv[1], &inv[2], &inv[3], &inv[4], &inv[5], &inv[6], &inv[7], &inv[8], &inv[9]);
+			if(ret != 10) {
+				printf("parameter error.  #>rxo_10lane_inv_set [inv0] [inv1] [inv2] [inv3] [inv_4] [inv_5] [inv_6] [inv_7] [inv_8] [inv_9]\n>");
+			}
+			else {
+				int index = 0;
+				for(; index < 10; index++) {
+					in_data.lane_inv[index] = (U8)inv[index];
+				}
+
+				ret = dsp_client_rxo_10lane_inv_set(context, &in_data);
+				if(ret == 0) {
+					printf("rxo_10lane_inv_set. OK\n>");
+				}
+				else {
+					printf("rxo_10lane_inv_set. NG\n>");
+				}
+			}
+		}/* Lane swap set */
+		else if(strncmp(buf, "txo_lane_swap_set", strlen("txo_lane_swap_set")) == 0) {
+			ret = sscanf(buf + strlen("txo_lane_swap_set"), " %d %d %d %d %d", &prm1, &prm2, &prm3, &prm4, &prm5);
+			if(ret != 5) {
+				printf("parameter error.  #>txo_lane_swap_set [order] [inv0] [inv1] [inv2] [inv3]\n>");
+			}
+			else {
+				ret = dsp_line_txo_lane_swap_set(context, prm1, prm2, prm3, prm4, prm5);
+				if(ret == 0) {
+					printf("txo_lane_swap_set. OK\n>");
+				}
+				else {
+					printf("txo_lane_swap_set. NG\n>");
+				}
+			}
+		}
+//FEC test
+		/* hdfec */
+		else if( strncmp( buf, CMD_HDFEC_GET, strlen(CMD_HDFEC_GET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_HDFEC_GET), " %d %d", &prm1, &prm2 );
+			if( ret != 2 ){
+				printf( "parameter error. #>hdfec_get [ch] [time]\n" );
+				printf( ">" );
+			}else{
+				printf( "hdfec_get..." );
+				ret = dsp_hdfec_get( context, prm1, prm2, &hdfec_ber );
+				if( ret == 0 ){
+					printf("OK\n");
+					hdfec_info( prm1, &hdfec_ber );
+				}else{
+					printf("NG\n>");
+				}
+				printf(">");
+			}
+		}
+		/* client gfec ber */
+		else if( strncmp( buf, CMD_CL_GFEC_GET, strlen(CMD_CL_GFEC_GET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_CL_GFEC_GET), " %d %d", &prm1, &prm2 );
+			if( ret != 2 ){
+				printf( "parameter error. #>cl_gfec_get [ch] [time]\n" );
+				printf( ">" );
+			}else{
+				printf( "cl_gfec_get..." );
+				ret = dsp_client_gfec_get( context, prm1, prm2, &gfec_ber );
+				if( ret == 0 ){
+					printf("OK\n");
+					cl_gfec_info( prm1, &gfec_ber );
+				}else{
+					printf("NG\n");
+				}
+				printf(">");
+			}
+		}
+		/* ldpc ber */
+		else if( strncmp( buf, CMD_LDPC_GET, strlen(CMD_LDPC_GET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_LDPC_GET), " %d", &prm1 );
+			if( ret != 1 ){
+				printf( "parameter error. #>ldpc_get [time]\n" );
+				printf( ">" );
+			}else{
+				if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.ModType == MOD_TYPE_16QAM ){
+					prm2 = CH_AB;
+				}else{
+					prm2 = CH_A;
+				}
+				printf( "ldpc_get..." );
+				ret = dsp_ldpc_get( context, prm1, &ldpc_ber );
+				if( ret == 0 ){
+					printf("OK\n");
+					ldpc_info( prm2, &ldpc_ber );
+				}else{
+					printf("NG\n");
+				}
+				printf(">");
+			}
+		}
+		/* ldpc prbs ber */
+		else if( strncmp( buf, CMD_LDPC_PRBS_GET, strlen(CMD_LDPC_PRBS_GET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_LDPC_PRBS_GET), " %d", &prm1 );
+			if( ret != 1 ){
+				printf( "parameter error. #>ldpc_prbs_get [time]\n" );
+				printf( ">" );
+			}else{
+				if( ((STR_DSP_CONTEXT*)context)->DspSdkParam.ModType == MOD_TYPE_16QAM ){
+					prm2 = CH_AB;
+				}else{
+					prm2 = CH_A;
+				}
+				printf( "ldpc_prbs_get..." );
+				ret = dsp_ldpc_prbs_get( context, prm1, &ldpc_prbs_ber );
+				if( ret == 0 ){
+					printf("OK\n");
+					ldpc_prbs_info( prm2, &ldpc_prbs_ber );
+				}else{
+					printf("NG\n");
+				}
+				printf(">");
+			}
+		}
+		/* bjfec_mon */
+		else if( strncmp( buf, CMD_BJFEC_MON_SET, strlen(CMD_BJFEC_MON_SET) )==0 ){
+			ret = dsp_client_cgbe_bjfec_mon_set( context, CH_AB, 1 );
+			if( ret == 0 ){
+				printf("bjfec_mon_set : OK\n>");
+			}else{
+				printf("bjfec_mon_set : NG\n>");
+			}
+		}
+		/* bjfec ber */
+		else if( strncmp( buf, CMD_BJFEC_GET, strlen(CMD_BJFEC_GET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_BJFEC_GET), " %d %d", &prm1, &prm2 );
+			if( ret != 2 ){
+				printf( "parameter error. #>bjfec_get [ch] [time]\n" );
+				printf( ">" );
+			}else{
+				printf( "bjfec_get..." );
+				ret = dsp_client_cgbe_bjfec_get( context, prm1, prm2, &bjfec_ber );
+				if( ret == 0 ){
+					printf("OK\n");
+					bjfec_info( prm1, &bjfec_ber );
+				}else{
+					printf("NG\n");
+				}
+				printf(">");
+			}
+		}
+//100gbe alarm
+		/* cgbe alarm */
+		else if( strncmp( buf, "cgbe_alm_get", strlen("cgbe_alm_get") ) == 0 ){
+			ret = sscanf( buf+strlen("cgbe_alm_get"), " %d %d", &prm1, &prm2 );
+			if( ret != 2 ){
+				printf( "parameter error. #>cgbe_alm_get [ch] [dir]\n" );
+				printf( ">" );
+			}else{
+				printf( "cl_cgbe_alarm_get..." );
+				ret = dsp_client_cgbe_alarm_get( context, prm1, prm2, &cgbe_alm );
+				if( ret == 0 ){
+					cgbe_alm_info(prm1, prm2, &cgbe_alm);
+					printf("OK\n");
+				}else{
+					printf("NG\n>");
+				}
+			}
+		}else if( strncmp( buf, "cgbe_alm_start", strlen("cgbe_alm_start") ) == 0 ){
+			ret = sscanf( buf+strlen("cgbe_alm_start"), " %d %d %d", &prm1, &prm2, &prm3 );
+			if( ret != 3 ){
+				printf( "parameter error. #>cgbe_alm_start [ch] [dir] [time]\n" );
+				printf( ">" );
+			}else{
+				printf( "cl_cgbe_alarm_start..." );
+				ret = dsp_client_cgbe_alarm_start( context, prm1, prm2, prm3, &cgbe_alm_mon );
+				if( ret == 0 ){
+					printf("OK\n");
+				}else{
+					printf("NG\n>");
+				}
+			}
+		}
+		else if( strncmp( buf, "cgbe_alm_stop", strlen("cgbe_alm_stop") ) == 0 ){
+			ret = sscanf( buf+strlen("cgbe_alm_stop"), " %d %d", &prm1, &prm2 );
+			if( ret != 2 ){
+				printf( "parameter error. #>cgbe_alm_stop [ch] [dir]\n" );
+			}else{
+				printf( "cl_cgbe_alarm_stop.." );
+				ret = dsp_client_cgbe_alarm_stop( context, prm1, prm2 );
+				if( ret == 0 ){
+					printf("OK\n");
+				}else{
+					printf("NG\n");
+				}
+			}
+			printf(">");
+		}
+		/* Get ODA rqfile */
+		else if( strncmp( buf, CMD_ODA_RQFILE_GET, strlen(CMD_ODA_RQFILE_GET) ) == 0 ){
+			file[0] = 0;
+			ret = sscanf( buf+strlen(CMD_ODA_RQFILE_GET), " %d %d %d %d %d %s", &prm1, &prm2, &prm3, &prm4, &prm5, file );
+			if( (ret != 5) && (ret != 6) ){
+				printf( "parameter error. #>oda_rqfile_get [200g] [sdfec] [cd] [cdopt] [day]\n" );
+			}else{
+				oda_req.m_200g = (U8)prm1;
+				oda_req.m_sdfec = (U8)prm2;
+				oda_req.m_cd = (U8)prm3;
+				oda_req.m_cdopt = (U32)prm4;
+				oda_req.m_day = (U32)prm5;
+				printf( "oda_rqfile_get.. " );
+				fflush( stdout );
+				ret = dsp_oda_rqfile_get( context, &oda_req, file, &rq_info );
+				if( ret == 0 ){
+					printf("OK\n");
+					printf("rq-file : %s\n", rq_info.filename);
+				}else{
+					printf("NG\n");
+				}
+			}
+			printf(">");
+		}/* Set ODA lcfile */
+		else if( strncmp( buf, CMD_ODA_LCFILE_SET, strlen(CMD_ODA_LCFILE_SET) ) == 0 ){
+			ret = sscanf( buf+strlen(CMD_ODA_LCFILE_SET), " %s", file );
+			if( ret == 1 ){
+				printf( "oda_lcfile_set.. " );
+				fflush( stdout );
+				ret = dsp_oda_lcfile_set( context, file );
+			}
+			if( ret == 0 ){
+				printf("OK\n");
+			}else{
+				printf("NG\n");
+			}
+			printf(">");
+		}/* Get ODA monitor */
+		else if( strncmp( buf, CMD_ODA_MON_GET, strlen(CMD_ODA_MON_GET) ) == 0 ){
+			printf( "oda_mon_get.. " );
+			fflush( stdout );
+			ret = dsp_oda_mon_get( context, &oda_info );
+			if( ret == 0 ){
+				printf("OK\n");
+				oda_mon( &oda_info );
+			}else{
+				printf("NG\n");
+			}
+			printf(">");
+		}
+
+//Help
+		/* Help */
+		else if( strncmp( buf, CMD_HELP, strlen(CMD_HELP) ) == 0 ){
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# Command help\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"param_set -f [f]\"    : DSP parameter set, f:config\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"hw_setup\"            : HW setup\n" );
+			printf( "# \"macro_setup\"         : Macro setup\n" );
+			printf( "# \"dsp_bringup\"         : DSP bringup\n" );
+			printf( "# \"cfp_bringup\"         : CFP2ACO bringup(Line)\n" );
+			printf( "# \"qsfp_bringup\"        : QSFP28 bringup(Client)\n" );
+			printf( "# \"eql_set\"             : TxEql setting\n" );
+			printf( "# \"adc_cal\"             : ADC calibration\n" );
+			printf( "# \"adc_bgcal_on\"        : ADC background calibration enable\n" );
+			printf( "# \"adc_bgcal_off\"       : ADC background calibration disable\n" );
+			printf( "# \"auto_traffic\"        : Auto traffic acquisition\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"hw_down\"             : HW down\n" );
+			printf( "# \"create_script\"       : Create script files\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"tj_mon_set_on\"       : TJ/AVS monitor ON\n" );
+			printf( "# \"tj_mon_set_off\"      : TJ/AVS monitor OFF\n" );
+			printf( "# \"tj_mon\"              : TJ monitor\n" );
+			printf( "# \"avs_mon\"             : AVS monitor\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"prbs_on [p] [a]\"     : PRBS insert and detect ON, ptn:0=PRBS31/1=15/2=11/3=7, area:0=Framer/1=Payload\n" );
+			printf( "# \"prbs_off\"            : PRBS insert and detect OFF\n" );
+			printf( "# \"prbs_ins_on [p] [a]\" : PRBS insert ON, ptn:0/1/2/3, area:0/1\n" );
+			printf( "# \"prbs_ins_off\"        : PRBS insert OFF \n" );
+			printf( "# \"prbs_det_on [o] [a]\" : PRBS detect ON, ptn:0/1/2/3, area:0/1\n" );
+			printf( "# \"prbs_det_off\"        : PRBS detect OFF\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"clloop_on [l]\"       : Client-Loopback ON, loop:1=near_a/2=near_b/3=far_end/4=long_far_end\n" );
+			printf( "# \"clloop_off\"          : Client-Loopback OFF\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"ber [s]\"             : BER get, [sec]\n" );
+			printf( "# \"ber_msec [msec]\"     : BER get, [msec]\n" );
+			printf( "# \"rms\"                 : RMS(xi,xq,yi,yq monitor)\n" );
+			printf( "# \"status\"              : Status check\n" );
+			printf( "# \"cd_get [wl]\"         : Chromatic dispersion value get, wl:wavelength[nm]\n" );
+			printf( "# \"dgd_get\"             : DGD value get\n" );
+			printf( "# \"foffset_get\"         : Frequency offset value get\n" );
+			printf( "# \"qfact_get [t]\"       : Q-Factor value get, t:time[sec]\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"r [a]\"               : Register read, a:addr\n" );
+			printf( "# \"w [a] [d]\"           : Register write, a:addr, d:data\n" );
+			printf( "# \"dspr [a]\"            : DSP Register read, a:addr\n" );
+			printf( "# \"dspw [a] [d]\"        : DSP Register write, a:addr, d:data\n" );
+			printf( "# \"cfpr [a]\"            : CFP2ACO Register read, a:addr(hhhh)\n" );
+			printf( "# \"cfpw [a] [d]\"        : CFP2ACO Register write, a:addr(hhhh), d:data(hhhh)\n" );
+			printf( "# \"qsfpar [a]\"          : QSFP28 Ch.A Register read, a:addr(hh)\n" );
+			printf( "# \"qsfpbr [a]\"          : QSFP28 Ch.B Register read, a:addr(hh)\n" );
+			printf( "# \"qsfpaw [a] [d]\"      : QSFP28 Ch.A Register write, a:addr(hh), d:data(hh)\n" );
+			printf( "# \"qsfpbw [a] [d]\"      : QSFP28 Ch.B Register write, a:addr(hh), d:data(hh)\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"end\"                 : DSP_SDK exit (remain context file)\n" );
+			printf( "# \"sdk_final\"           : DSP_SDK final (delete context file)\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"auto_cal_init\"       : AutoCal init (if not use auto_cal_detect_on)\n" );
+			printf( "# \"auto_cal_exe\"        : AutoCal calibration exe (if not use auto_cal_detect_on)\n" );
+			printf( "# \"cfp_ext_chk\"         : AutoCal CFP2ACO existence check (if not use auto_cal_detect_on)\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"tx_coarse_skew_set [xi] [xq] [yi] [yq]\" : Tx coarse skew setting\n" );
+			printf( "# \"rx_coarse_skew_set [xi] [xq] [yi] [yq]\" : Rx coarse skew setting\n" );
+			printf( "# \"tx_fine_skew_set [xi] [xq] [yi] [yq]\"   : Tx fine skew setting\n" );
+			printf( "# \"rx_fine_skew_set [xi] [xq] [yi] [yq]\"   : Rx fine skew setting\n" );
+			printf( "# \"tx_eql_tap_set [file]\"                  : TxEQL tap-coef setting\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"tx_coarse_skew_get\"                     : Tx coarse skew get\n" );
+			printf( "# \"rx_coarse_skew_get\"                     : Rx coarse skew get\n" );
+			printf( "# \"tx_fine_skew_get\"                       : Tx fine skew get\n" );
+			printf( "# \"rx_fine_skew_get\"                       : Rx fine skew get\n" );
+			printf( "# \"tx_eql_tap_get [file]\"                  : TxEQL tap-coef get\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"tx_eql_bypass_on\"                       : TxEQL bypass ON\n" );
+			printf( "# \"tx_eql_bypass_off\"                      : TxEQL bypass OFF\n" );
+			printf( "# \"line_prbs_on\"                           : Line PRBS insert ON\n" );
+			printf( "# \"line_prbs_off\"                          : Line PRBS insert OFF\n" );
+			printf( "# \"tx_mclk_out_on [d]\"                     : Tx MCLK output ON, d:0=1/128,1=1/32,2=1/16\n" );
+			printf( "# \"tx_mclk_out_off\"                        : Tx MCLK output OFF\n" );
+			printf( "# \"dc_offset_bypass_on\"                    : DC offset bypass ON\n" );
+			printf( "# \"dc_offset_bypass_off\"                   : DC offset bypass OFF\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"ram1_capture [w] [f]\"                   : RAM1 capture, w:word size, f:file\n" );
+			printf( "# \"ram3_capture [w] [f]\"                   : RAM3 capture, w:word size, f:file\n" );
+			printf( "# \"ram7_insert [w] [f]\"                    : RAM7 insert, w:word size, f:file\n" );
+			printf( "# \"ram7_insert_off\"                        : RAM7 insert disable\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"cnt_clk_chk\"  \n" );
+			printf( "# \"pll_unlock_chk\"  \n" );
+			printf( "# \"txia_lane_swap_set [o] [l0] [l1] [l2] [l3]\": TXI-Ch.A Lane swap, o:order, lane-x:0=normal/1=invert\n" );
+			printf( "# \"txib_lane_swap_set [o] [l0] [l1] [l2] [l3]\": TXI-Ch.B Lane swap, o:order, lane-x:0=normal/1=invert\n" );
+			printf( "# \"rxoa_lane_swap_set [o] [l0] [l1] [l2] [l3]\": RXO-Ch.A Lane swap, o:order, lane-x:0=normal/1=invert\n" );
+			printf( "# \"rxob_lane_swap_set [o] [l0] [l1] [l2] [l3]\": RXO-Ch.B Lane swap, o:order, lane-x:0=normal/1=invert\n" );
+			printf( "# \"txo_lane_swap_set [o] [l0] [l1] [l2] [l3] \": TXO Lane swap, o:order, lane-x:0=normal/1=invert\n" );
+			printf( "# \"txi_10lane_inv_set [l0] [l1] [l2] [l3] [l4] [l5] [l6] [l7] [l8] [l9]\": 10Lane-Client bit invert\n" );
+			printf( "# \"rxo_10lane_inv_set [l0] [l1] [l2] [l3] [l4] [l5] [l6] [l7] [l8] [l9]\": 10Lane-Client bit invert\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "# \"oda_rqfile_get [200g] [sdfec] [cd] [path]\" : Get ODA request file, 200g/sdfec/cd:1=request\n" );
+			printf( "# \"oda_lcfile_set [file]\"                     : Set ODA license file, file=license file\n" );
+			printf( "# \"oda_mon_get\"                               : Get ODA information\n" );
+			printf( "#-----------------------------------------------------------------------\n" );
+			printf( "\n>" );
+		}
+		else{
+			printf( "cmd error\n>" );
+		}
+
+		fflush(stdin);
+		udsp_wait( 10 );
+	}
+	return;
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			void cgbe_ber_info( U8 mod_type, STR_CL_CGBE_BER_DATA* data )
+ *	\brief		Output Client-100GbE BER information
+ *	\param[in]	mod_type	Mode type
+ *	\param[in]	data		Pointer to Client-100GbE BER data
+ *	\return		None
+ */
+void cgbe_ber_info( U8 mod_type, STR_CL_CGBE_BER_DATA* data )
+{
+
+	/* BER data */
+	/* 100G / 200G */
+	printf( "CH.A BER\n" );
+	printf(     "  Time                  : %lld [msec]\n", data->time );
+	if( data->sync_err_a == 0 ){
+		printf( "  Sync                  : Sync OK\n" );
+	}else{
+		printf( "  Sync                  : Sync Err\n" );
+		data->cor_ldpc_en = 0;
+		data->cor_hdfec_en = 0;
+		data->cgbe_prbs_en = 0;
+	}
+	if( data->cgbe_prbs_en == 1 ){
+		if( data->pn_ptn_loss_sync_a == 0 ){
+			printf( "  PRBS Sync(A)          : PRBS Sync OK\n" );
+		}else{
+			printf( "  PRBS Sync(A)          : PRBS Sync Err\n" );
+		}
+	}
+	/* CH.A Count */
+	if( data->cor_ldpc_en == 1 ){
+		printf( "  Crt -SD-Fec Count(A)  : %lld\n", data->cor_ldpc_cnt_a);
+	}else{
+		//printf( "  Crt -SD-Fec Count(A)  :(%lld)\n", data->cor_ldpc_cnt_a);
+	}
+	if( data->cor_hdfec_en == 1 ){
+		printf( "  Crt -HD-Fec Count(A)  : %lld\n", data->cor_hdfec_cnt_a);
+	}else{
+		//printf( "  Crt -HD-Fec Count(A)  :(%lld)\n", data->cor_hdfec_cnt_a);
+	}
+	if( data->cgbe_prbs_en == 1 ){
+		printf( "  Post-HD-Fec Count(A)  : %lld\n", data->cgbe_prbs_cnt_a );
+	}else{
+		//printf( "  Post-HD-Fec Count(A)  :(%d)\n", data->cgbe_prbs_cnt_a );
+	}
+	/* CH.A BER */
+	if( data->cor_ldpc_en == 1 ){
+		printf( "  Crt -SD-Fec BER(A)    : %e\n" ,data->cor_ldpc_ber_a );
+	}else{
+		//printf( "  Crt -SD-Fec BER(A)    :(%e)\n" ,data->cor_ldpc_ber_a );
+	}
+	if( data->cor_hdfec_en == 1 ){
+		printf( "  Crt -HD-Fec BER(A)    : %e\n" ,data->cor_hdfec_ber_a );
+	}else{
+		//printf( "  Crt -HD-Fec BER(A)    :(%e)\n" ,data->cor_hdfec_ber_a );
+	}
+	if( data->cgbe_prbs_en == 1 ){
+		printf( "  Post-HD-Fec BER(A)    : %e\n", data->cgbe_prbs_ber_a );
+	}else{
+		//printf( "  Post-HD-Fec BER(A)    :(%e)\n", data->cgbe_prbs_ber_a );
+	}
+
+	/* 200G */
+	if( mod_type == MOD_TYPE_16QAM ){
+		printf( "CH.B BER\n" );
+		/* PRBS Sync */
+		if( data->cgbe_prbs_en == 1 ){
+			if( data->pn_ptn_loss_sync_a != 0 ){
+				printf( "  PRBS Sync(B)          : PRBS Sync Err\n" );
+			}else{
+				printf( "  PRBS Sync(B)          : PRBS Sync OK\n" );
+			}
+		}
+		/* CH.B Count */
+		if( data->cor_ldpc_en == 1 ){
+			printf( "  Crt -SD-Fec Count(B)  : %lld\n", data->cor_ldpc_cnt_b);
+		}else{
+			//printf( "  Crt -SD-Fec Count(B)  :(%lld)\n", data->cor_ldpc_cnt_b);
+		}
+		if( data->cor_hdfec_en == 1 ){
+			printf( "  Crt -HD-Fec Count(B)  : %lld\n", data->cor_hdfec_cnt_b);
+		}else{
+			//printf( "  Crt -HD-Fec Count(B)  :(%lld)\n", data->cor_hdfec_cnt_b);
+		}
+		if( data->cgbe_prbs_en == 1 ){
+			printf( "  Post-HD-Fec Count(B)  : %lld\n", data->cgbe_prbs_cnt_b );
+		}else{
+			//printf( "  Post-HD-Fec Count(B)  :(%d)\n", data->cgbe_prbs_cnt_b );
+		}
+		/* CH.B BER */
+		if( data->cor_ldpc_en == 1 ){
+			printf( "  Crt -SD-Fec BER(B)    : %e\n" ,data->cor_ldpc_ber_b );
+		}else{
+			//printf( "  Crt -SD-Fec BER(B)    :(%e)\n" ,data->cor_ldpc_ber_b );
+		}
+		if( data->cor_hdfec_en == 1 ){
+			printf( "  Crt -HD-Fec BER(B)    : %e\n" ,data->cor_hdfec_ber_b );
+		}else{
+			//printf( "  Crt -HD-Fec BER(B)    :(%e)\n" ,data->cor_hdfec_ber_b );
+		}
+		if( data->cgbe_prbs_en == 1 ){
+			printf( "  Post-HD-Fec BER(B)    : %e\n", data->cgbe_prbs_ber_b );
+		}else{
+			//printf( "  Post-HD-Fec BER(B)    :(%e)\n", data->cgbe_prbs_ber_b );
+		}
+	}
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			S16 cgbe_ber_mon( void* context, CLIENT_CH ch, STR_CL_CGBE_BER_DATA* data )
+ *	\brief		Monitor Client-100GbE BER information
+ *	\param[in]	context		Pointer to context memory
+ *	\param[in]	ch			Client channel
+ *	\param[in]	data		Client-100GbE BER data
+ *	\retval		0			OK
+ */
+S16 cgbe_ber_mon( void* context, CLIENT_CH ch, STR_CL_CGBE_BER_DATA* data )
+{
+	U8 mod_type;
+
+	mod_type = ((STR_DSP_CONTEXT*)context)->DspSdkParam.ModType;
+
+	cgbe_ber_info( mod_type, data );
+
+	return( 0 );
+}
+
+
+/*!---------------------------------------------------------------------
+ *	\fn			void otu4_ber_info( U8 mod_type, STR_CL_OTU4_BER_DATA* data )
+ *	\brief		Output Client-OTU4 BER information
+ *	\param[in]	mod_type	Mode type
+ *	\param[in]	data		Client-100GbE BER data
+ *	\return		None
+ */
+void otu4_ber_info( U8 mod_type, STR_CL_OTU4_BER_DATA* data )
+{
+	U8 pn_sync_err_a = 0;
+	U8 pn_sync_err_b = 0;
+
+	/* BER data */
+	/* 100G / 200G */
+	printf( "CH.A BER\n" );
+	printf(     "  Time                    : %lld [msec]\n", data->time );
+	if( data->frm_sync_err_a == 0 ){
+		printf( "  Sync                    : Sync OK\n" );
+	}else{
+		printf( "  Sync                    : Sync Err\n" );
+		data->pre_ldpc_en = 0;
+		data->cor_ldpc_en = 0;
+		data->pre_hdfec_en = 0;
+		data->cor_hdfec_en = 0;
+		data->post_hdfec_en = 0;
+	}
+	if( data->pre_ldpc_en == 1 ){
+		if( data->prbs_sync_err_a == 0 ){
+			printf( "  PRBS Sync(A)            : PRBS Sync OK\n" );
+		}else{
+			printf( "  PRBS Sync(A)            : PRBS Sync Err\n" );
+			pn_sync_err_a = 1;
+		}
+		if( data->prbs_cnt_err_a != 0 ){
+			printf( "  Count Err               : PRBS Count Err\n" );
+		}
+	}
+	if( data->pre_hdfec_en == 1 ){
+		if( data->pre_hdfec_pn_sync_err_a == 0 ){
+			printf( "  Pre -HDFec PRBS Sync(A) : PRBS Sync OK\n" );
+		}else{
+			printf( "  Pre -HDFec PRBS Sync(A) : PRBS Sync Err\n" );
+			pn_sync_err_a = 1;
+		}
+	}
+	if( data->post_hdfec_en == 1 ){
+		if( data->post_hdfec_pn_sync_err_a == 0 ){
+			printf( "  Post-HDFec PRBS Sync(A) : PRBS Sync OK\n" );
+		}else{
+			printf( "  Post-HDFec PRBS Sync(A) : PRBS Sync Err\n" );
+			pn_sync_err_a = 1;
+		}
+	}
+
+	/* CH.A Count */
+	if( pn_sync_err_a == 0 ){
+		if( data->pre_ldpc_en == 1 ){
+			printf( "  Pre -SD-Fec Count(A)    : %lld\n", data->pre_ldpc_cnt_a );
+		}else{
+			//printf( "  Pre -SD-Fec Count(A)  :(%lld)\n", data->pre_ldpc_cnt_a );
+		}
+		if( data->cor_ldpc_en == 1 ){
+			printf( "  Crt -SD-Fec Count(A)    : %lld\n", data->cor_ldpc_cnt_a);
+		}else{
+			//printf( "  Crt -SD-Fec Count(A)  :(%lld)\n", data->cor_ldpc_cnt_a);
+		}
+		if( data->pre_hdfec_en == 1 ){
+			printf( "  Pre -HD-Fec Count(A)    : %lld\n", data->pre_hdfec_cnt_a);
+		}else{
+			//printf( "  Pre -HD-Fec Count(A)  :(%lld)\n", data->pre_hdfec_cnt_a);
+		}
+		if( data->cor_hdfec_en == 1 ){
+			printf( "  Crt -HD-Fec Count(A)    : %lld\n", data->cor_hdfec_cnt_a);
+		}else{
+			//printf( "  Crt -HD-Fec Count(A)  :(%lld)\n", data->cor_hdfec_cnt_a);
+		}
+		if( data->post_hdfec_en == 1 ){
+			printf( "  Post-HD-Fec Count(A)    : %lld\n", data->post_hdfec_cnt_a );
+		}else{
+			//printf( "  Post-HD-Fec Count(A)  :(%lld)\n", data->post_hdfec_cnt_a );
+		}
+		/* CH.A BER */
+		if( data->pre_ldpc_en == 1 ){
+			printf( "  Pre -SD-Fec BER(A)      : %e\n", data->pre_ldpc_ber_a );
+		}else{
+			//printf( "  Pre -SD-Fec BER(A)    :(%e)\n", data->pre_ldpc_ber_a );
+		}
+		if( data->cor_ldpc_en == 1 ){
+			printf( "  Crt -SD-Fec BER(A)      : %e\n" ,data->cor_ldpc_ber_a );
+		}else{
+			//printf( "  Crt -SD-Fec BER(A)    :(%e)\n" ,data->cor_ldpc_ber_a );
+		}
+		if( data->pre_hdfec_en == 1 ){
+			printf( "  Pre -HD-Fec BER(A)      : %e\n" ,data->pre_hdfec_ber_a );
+		}else{
+			//printf( "  Pre -HD-Fec BER(A)    :(%e)\n" ,data->pre_hdfec_ber_a );
+		}
+		if( data->cor_hdfec_en == 1 ){
+			printf( "  Crt -HD-Fec BER(A)      : %e\n" ,data->cor_hdfec_ber_a );
+		}else{
+			//printf( "  Crt -HD-Fec BER(A)    :(%e)\n" ,data->cor_hdfec_ber_a );
+		}
+		if( data->post_hdfec_en == 1 ){
+			printf( "  Post-HD-Fec BER(A)      : %e\n", data->post_hdfec_ber_a );
+		}else{
+			//printf( "  Post-HD-Fec BER(A)    :(%e)\n", data->post_hdfec_ber_a );
+		}
+	}
+
+	/* 200G */
+	if( mod_type == MOD_TYPE_16QAM ){
+		printf( "CH.B BER\n" );
+		if( data->frm_sync_err_b == 0 ){
+			printf( "  Sync                    : Sync OK\n" );
+		}else{
+			printf( "  Sync                    : Sync Err\n" );
+		}
+		if( data->pre_ldpc_en == 1 ){
+			if( data->prbs_sync_err_b == 0 ){
+				printf( "  PRBS Sync(B)            : PRBS Sync OK\n" );
+			}else{
+				printf( "  PRBS Sync(B)            : PRBS Sync Err\n" );
+				pn_sync_err_b = 1;
+			}
+			if( data->prbs_cnt_err_b != 0 ){
+				printf( "  Count Err(B)            : PRBS Count Err\n" );
+			}
+		}
+		if( data->pre_hdfec_en == 1 ){
+			if( data->pre_hdfec_pn_sync_err_b == 0 ){
+				printf( "  Pre -HDFec PRBS Sync(B) : PRBS Sync OK\n" );
+			}else{
+				printf( "  Pre -HDFec PRBS Sync(B) : PRBS Sync Err\n" );
+				pn_sync_err_b = 1;
+			}
+		}
+		if( data->post_hdfec_en == 1 ){
+			if( data->post_hdfec_pn_sync_err_b == 0 ){
+				printf( "  Post-HDFec PRBS Sync(B) : PRBS Sync OK\n" );
+			}else{
+				printf( "  Post-HDFec PRBS Sync(B) : PRBS Sync Err\n" );
+				pn_sync_err_b = 1;
+			}
+		}
+
+		/* CH.B Count */
+		if( pn_sync_err_b == 0 ){
+			if( data->pre_ldpc_en == 1 ){
+				printf( "  Pre -SD-Fec Count(B)    : %lld\n", data->pre_ldpc_cnt_b );
+			}else{
+				//printf( "  Pre -SD-Fec Count(B)  :(%lld)\n", data->pre_ldpc_cnt_b );
+			}
+			if( data->cor_ldpc_en == 1 ){
+				printf( "  Crt -SD-Fec Count(B)    : %lld\n", data->cor_ldpc_cnt_b);
+			}else{
+				//printf( "  Crt -SD-Fec Count(B)  :(%lld)\n", data->cor_ldpc_cnt_b);
+			}
+			if( data->pre_hdfec_en == 1 ){
+				printf( "  Pre -HD-Fec Count(B)    : %lld\n", data->pre_hdfec_cnt_b);
+			}else{
+				//printf( "  Pre -HD-Fec Count(B)  :(%lld)\n", data->pre_hdfec_cnt_b);
+			}
+			if( data->cor_hdfec_en == 1 ){
+				printf( "  Crt -HD-Fec Count(B)    : %lld\n", data->cor_hdfec_cnt_b);
+			}else{
+				//printf( "  Crt -HD-Fec Count(B)  :(%lld)\n", data->cor_hdfec_cnt_b);
+			}
+			if( data->post_hdfec_en == 1 ){
+				printf( "  Post-HD-Fec Count(B)    : %lld\n", data->post_hdfec_cnt_b );
+			}else{
+				//printf( "  Post-HD-Fec Count(B)  :(%lld)\n", data->post_hdfec_cnt_b );
+			}
+			/* CH.B BER */
+			if( data->pre_ldpc_en == 1 ){
+				printf( "  Pre -SD-Fec BER(B)      : %e\n", data->pre_ldpc_ber_b );
+			}else{
+				//printf( "  Pre -SD-Fec BER(B)    :(%e)\n", data->pre_ldpc_ber_b );
+			}
+			if( data->cor_ldpc_en == 1 ){
+				printf( "  Crt -SD-Fec BER(B)      : %e\n" ,data->cor_ldpc_ber_b );
+			}else{
+				//printf( "  Crt -SD-Fec BER(B)    :(%e)\n" ,data->cor_ldpc_ber_b );
+			}
+			if( data->pre_hdfec_en == 1 ){
+				printf( "  Pre -HD-Fec BER(B)      : %e\n" ,data->pre_hdfec_ber_b );
+			}else{
+				//printf( "  Pre -HD-Fec BER(B)    :(%e)\n" ,data->pre_hdfec_ber_b );
+			}
+			if( data->cor_hdfec_en == 1 ){
+				printf( "  Crt -HD-Fec BER(B)      : %e\n" ,data->cor_hdfec_ber_b );
+			}else{
+				//printf( "  Crt -HD-Fec BER(B)    :(%e)\n" ,data->cor_hdfec_ber_b );
+			}
+			if( data->post_hdfec_en == 1 ){
+				printf( "  Post-HD-Fec BER(B)      : %e\n", data->post_hdfec_ber_b );
+			}else{
+				//printf( "  Post-HD-Fec BER(B)    :(%e)\n", data->post_hdfec_ber_b );
+			}
+		}
+	}
+	return;
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			S16 otu4_ber_mon( void* context, STR_CL_OTU4_BER_DATA* data )
+ *	\brief		Monitor OTU4 ber information
+ *	\param[in]	context		Pointer to context memory
+ *	\param[out]	data		Monitor value
+ *	\retval		0			OK
+ */
+S16 otu4_ber_mon( void* context, STR_CL_OTU4_BER_DATA* data )
+{
+	U8 mod_type = 0;
+
+	mod_type = ((STR_DSP_CONTEXT*)context)->DspSdkParam.ModType;
+
+	otu4_ber_info( mod_type, data );
+
+	return( 0 );
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			static BOOL config_read_file( char* filename )
+ *	\brief		Read configuration values from config file
+ *	\param		filename	Config file name
+ *	\retval		TRUE		Config file has been read successfully
+ *	\retval		FALSE		Error has occurred
+ */
+static BOOL config_read_file( char* filename )
+{
+	BOOL ret = TRUE;
+	FILE* fp = NULL;
+	const STR_S_CONFIG_TABLE_ITEM* item = &( ConfigTable[0] );
+
+	/* CONFIG file data clear */
+	memset( &AppConfig, 0, sizeof( STR_SAMPLE_CONFIG_DATA ) );
+	/* file open */
+	fp = fopen( filename, "r" );
+	if( fp == NULL ){
+		fputs( "Error : Config File Open\n", stdout );
+		return FALSE;
+	}
+	while( 1 ){
+		if( (strlen(item->Name) <= 0) || (item->Ptr == NULL) ){
+			break;
+		}
+		if( config_read( fp, item->Name, (void*)(item->Ptr), item->Type ) == TRUE ){
+			switch( item->Type ){
+			case CONFIG_TYPE_U8:
+				printf( "%s = %d\n", item->Name, *((U8*)(item->Ptr)) );
+				break;
+			case CONFIG_TYPE_U16:
+				printf( "%s = %d\n", item->Name, *((U16*)(item->Ptr)) );
+				break;
+			case CONFIG_TYPE_U32:
+				printf( "%s = %d\n", item->Name, *((U32*)(item->Ptr)) );
+				break;
+			case CONFIG_TYPE_BOOL:
+				printf( "%s = %d\n", item->Name, *((BOOL*)(item->Ptr)) );
+				break;
+			case CONFIG_TYPE_STRING:
+				printf( "%s = %s\n", item->Name, (char*)(item->Ptr) );
+				break;
+			case CONFIG_TYPE_FLOAT:
+				printf( "%s = %f\n", item->Name, *((float*)(item->Ptr)) );
+				break;
+			case CONFIG_TYPE_S8:
+				printf( "%s = %d\n", item->Name, *((S8*)(item->Ptr)) );
+				break;
+			case CONFIG_TYPE_S16:
+				printf( "%s = %d\n", item->Name, *((S16*)(item->Ptr)) );
+				break;
+			case CONFIG_TYPE_S32:
+				printf( "%s = %d\n", item->Name, *((S32*)(item->Ptr)) );
+				break;
+			case CONFIG_TYPE_H8:
+				printf( "%s = 0x%02X\n", item->Name, *((U8*)(item->Ptr)) );
+				break;
+			case CONFIG_TYPE_H16:
+				printf( "%s = 0x%04X\n", item->Name, *((U16*)(item->Ptr)) );
+				break;
+			case CONFIG_TYPE_H32:
+				printf( "%s = 0x%08X\n", item->Name, *((U32*)(item->Ptr)) );
+				break;
+			default:
+				break;
+			}
+		}
+		item ++;
+	}
+	/* file close */
+	fclose( fp );
+	return ret;
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			static BOOL config_read( FILE* fp, const char* string, void* val, U8 type )
+ *	\brief		Read configuration values from config file
+ *	\param		fp			File pointer
+ *	\param		string		Pointer to parameter strings
+ *	\param		val			Pointer to buffer
+ *	\param		type		Data type
+ *	\retval		TRUE		Configuration has been read successfully
+ *	\retval		FALSE		Error has occurred
+ */
+static BOOL config_read( FILE* fp, const char* string, void* val, U8 type )
+{
+	BOOL ret = FALSE;
+	char buf[CONFIGFILE_INPUT_BUFFER_SIZE];
+	char* ptr = NULL;
+	int index;
+
+	fseek( fp, SEEK_SET, 0 );
+	while( 1 ){
+		/* read from file */
+		if( fgets( buf, CONFIGFILE_INPUT_BUFFER_SIZE, fp ) == NULL ){
+			break;
+		}
+		/* comment delete(#) */
+		for( index=0; index<CONFIGFILE_INPUT_BUFFER_SIZE; index++ ){
+			if( buf[index] != '#' ){
+				continue;
+			}
+			for( ; index<CONFIGFILE_INPUT_BUFFER_SIZE; index++ ){
+				buf[index] = '\0';
+			}
+			break;
+		}
+		/* parameter check */
+		if( strncmp( string, buf, strlen(string) ) != 0 ){
+			continue;
+		}
+		ptr = strchr( buf, ' ' );
+		if( ptr == NULL ){
+			break;
+		}
+		ptr += 1;
+		/* data read */
+		ret = config_read_value( type, ptr, val );
+		break;
+	}
+	return ret;
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			static BOOL config_read_value( U8 type, char* str, void* val )
+ *	\brief		Read configuration value according to specified data type
+ *	\param		type		Data type
+ *	\param		str			Pointer to data strings
+ *	\param		val			Pointer to buffer
+ *	\retval		TRUE		Value of the configuration has been read successfully
+ *	\retval		FALSE		Error has occurred
+ */
+static BOOL config_read_value( U8 type, char* str, void* val )
+{
+	BOOL ret = FALSE;
+	int ival;
+	if( (str != NULL) && (val != NULL) ){
+		if( type == CONFIG_TYPE_STRING ){
+			sscanf( str, "%s", (char*)val );
+			ret = TRUE;
+		}else if( type == CONFIG_TYPE_FLOAT ){
+			if( sscanf( str, "%f", (float*)val ) == 1 ){
+				ret = TRUE;
+			}
+		}else if( type == CONFIG_TYPE_BOOL ){
+			if( sscanf( str, "%d", &ival ) == 1 ){
+				if( ival > 0 ){
+					*((BOOL*)val) = TRUE;
+				}else{
+					*((BOOL*)val) = FALSE;
+				}
+				ret = TRUE;
+			}
+		}else if( type == CONFIG_TYPE_U8 ){
+			if( sscanf( str, "%d", &ival ) == 1 ){
+				*((U8*)val) = (U8)ival;
+				ret = TRUE;
+			}
+		}else if( type == CONFIG_TYPE_U16 ){
+			if( sscanf( str, "%d", &ival ) == 1 ){
+				*((U16*)val) = (U16)ival;
+				ret = TRUE;
+			}
+		}else if( type == CONFIG_TYPE_U32 ){
+			if( sscanf( str, "%d", &ival ) == 1 ){
+				*((U32*)val) = (U32)ival;
+				ret = TRUE;
+			}
+		}else if( type == CONFIG_TYPE_S8 ){
+			if( sscanf( str, "%d", &ival ) == 1 ){
+				*((S8*)val) = (S8)ival;
+				ret = TRUE;
+			}
+		}else if( type == CONFIG_TYPE_S16 ){
+			if( sscanf( str, "%d", &ival ) == 1 ){
+				*((U16*)val) = (S16)ival;
+				ret = TRUE;
+			}
+		}else if( type == CONFIG_TYPE_S32 ){
+			if( sscanf( str, "%d", &ival ) == 1 ){
+				*((S32*)val) = (S32)ival;
+				ret = TRUE;
+			}
+		}else if( type == CONFIG_TYPE_H8 ){
+			if( sscanf( str, "0x%02X", &ival ) == 1 ){
+				*((U8*)val) = (U8)ival;
+				ret = TRUE;
+			}
+		}else if( type == CONFIG_TYPE_H16 ){
+			if( sscanf( str, "0x%04X", &ival ) == 1 ){
+				*((U16*)val) = (U16)ival;
+				ret = TRUE;
+			}
+		}else if( type == CONFIG_TYPE_H32 ){
+			if( sscanf( str, "0x%08X", &ival ) == 1 ){
+				*((U32*)val) = (U32)ival;
+				ret = TRUE;
+			}
+		}else{
+			;
+		}
+	}
+	return ret;
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			void dsp_rms_check_info( DSP_RMS_INFO* info )
+ *	\brief		Output RMS information
+ *	\param[in]	info		Pointer to RMS information
+ *	\return		None
+ */
+void dsp_rms_check_info( DSP_RMS_INFO* info )
+{
+	/* rms data */
+	printf(" Read Check XI RMS  :%d\n", info->mon_rms_xi );
+	printf(" Read Check XQ RMS  :%d\n", info->mon_rms_xq );
+	printf(" Read Check YI RMS  :%d\n", info->mon_rms_yi );
+	printf(" Read Check YQ RMS  :%d\n", info->mon_rms_yq );
+
+	return;
+}
+
+
+/*!---------------------------------------------------------------------
+ *	\fn			void dsp_ref_sync_check_info( DSP_REF_SYNC_INFO* info )
+ *	\brief		Output Ref Sync information
+ *	\param[in]	info	Pointer to Ref Sync information
+ *	\return		None
+ */
+void dsp_ref_sync_check_info( DSP_REF_SYNC_INFO* info )
+{
+	/* rms data */
+	printf( " Check Ref. sync  :%d\n", info->ssp_ssp_freq_sync_st );
+
+	return;
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			void dsp_line_sync_check_info( DSP_LINE_SYNC_INFO* info )
+ *	\brief		Output Line Sync information
+ *	\param[in]	info	Pointer to Line Sync information
+ *	\return		None
+ */
+void dsp_line_sync_check_info( DSP_LINE_SYNC_INFO* info )
+{
+	/* line sync data */
+	printf(     " Read Check XI RMS  :%d\n", info->mon_rms_xi );
+	printf(     " Read Check XQ RMS  :%d\n", info->mon_rms_xq);
+	printf(     " Read Check YI RMS  :%d\n", info->mon_rms_yi );
+	printf(     " Read Check YQ RMS  :%d\n", info->mon_rms_yq );
+	printf(     " Check LINE sync    :%d\n", info->line_sync );
+	printf(     " Check TAP_BALANCE_OK (AEQ complete):%d\n", info->tap_balance);
+	printf(     " Check PD sensitivity  :%d\n", info->pd_sensitivity );
+	printf(     " Check OTL44v alarms  :%d\n", info->otl44v_alarm);
+	printf(     " MF number  :%d\n", info->mf_number );
+	printf(     " TS Skew  :%d\n", info->ts_skew );
+	printf(     " Corrected error bit counter of LDPC   :%d\n", info->h_ldpc_err_cont_a_h );
+	printf(     " Corrected error bit counter of LDPC   :%d\n", info->h_ldpc_err_cont_a_l );
+	printf(     " (Pre-LDPC)  :%d\n", info->prbs_sync);
+	printf(     " Error bit counter of PRBS (Pre-LDPC)  :%d\n", info->err_bit_cnt_prbs_h );
+	printf(     " Error bit counter of PRBS (Pre-LDPC)  :%d\n", info->err_bit_cnt_prbs_l );
+	printf(     " Corrected error bit counter of LDPC   :%d\n", info->correct_err_bit_cnt_h );
+	printf(     " Corrected error bit counter of LDPC  :%d\n", info->correct_err_bit_cnt_l);
+	printf(     " Check PRBS error pre HD-FEC  :%d\n", info->prbs_error_pre_hdfec );
+	printf(     " Check PRBS error post HD-FEC  :%d\n", info->prbs_error_post_hdfec );
+	return;
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			void dsp_status_check_info( DSP_STATUS_CHECK_INFO* info )
+ *	\brief		Output Status information
+ *	\param[in]	info	Pointer to Status information
+ *	\return		None
+ */
+void dsp_status_check_info( DSP_STATUS_CHECK_INFO* info )
+{
+	U8 sync = 0;
+
+	/* status data */
+	printf(     " XI RMS  :%d\n", info->mon_rms_xi );
+	printf(     " XQ RMS  :%d\n", info->mon_rms_xq);
+	printf(     " YI RMS  :%d\n", info->mon_rms_yi );
+	printf(     " YQ RMS  :%d\n", info->mon_rms_yq );
+	printf(     " LINE sync    :%d\n", info->line_sync );
+	printf(     " TAP_BALANCE_OK (AEQ complete):%d\n", info->tap_balance);
+	printf(     " PD sensitivity  :%d\n", info->pd_sensitivity );
+	printf(     " ModType    :%d\n", info->modtype );
+	if( info->modtype == MOD_TYPE_QPSK_OC ){
+		printf( " Sync-alarms1 :%d\n", info->sync_alarm1);
+		printf( " Sync-alarms2 :%d\n", info->sync_alarm2);
+		if( (info->sync_alarm1 != 0) || (info->sync_alarm2 != 0) ){
+			sync = 1;
+		}
+	}else{
+		printf( " Sync-alarms  :%d\n", info->sync_alarm1);
+		printf( " MF number  :0x%08x\n", info->mf_number );
+		printf( " TS Skew    :0x%08x\n", info->ts_skew  );
+		if( info->sync_alarm1 != 0 ){
+			sync = 1;
+		}
+	}
+	if( sync == 0 ){
+		/* Ch.A */
+		printf(     " Client_A   :%d\n", info->client_a );
+		if( (info->sdfec == SDFEC_ON) && (info->client_a == CLI_OTL4) ){
+			printf( " Ch.A PRBS-sync  pre  SD-FEC :%d\n", info->prbs_sync_pre_sdfec_a );
+		}
+		printf(     " Ch.A PRBS-sync       HD-FEC :%d\n", info->prbs_sync_hdfec_a );
+		if( (info->prbs_sync_pre_sdfec_a == 0) && (info->sdfec == SDFEC_ON) && (info->client_a == CLI_OTL4) ){
+			printf( " Ch.A PRBS-err   pre  SD-FEC :%lld\n", info->prbs_err_pre_sdfec_a );
+		}
+		if( info->prbs_sync_hdfec_a == 0 ){
+			if( info->client_a == CLI_OTL4 ){
+				printf( " Ch.A PRBS-err   pre  HD-FEC :%d\n", info->prbs_err_pre_hdfec_a );
+			}
+			printf(     " Ch.A PRBS-err   post HD-FEC :%d\n", info->prbs_err_post_hdfec_a );
+		}
+		printf(     " Ch.A Crt-err         HD-FEC :%d\n", info->correct_err_hdfec_a );
+
+		/* Ch.B */
+		if(info->modtype == MOD_TYPE_16QAM){
+			printf( " Client_B :%d\n", info->client_b );
+			if( (info->sdfec == SDFEC_ON) && (info->client_b == CLI_OTL4) ){
+				printf( " Ch.B PRBS-sync  pre  SD-FEC :%d\n", info->prbs_sync_pre_sdfec_b );
+			}
+			printf(     " Ch.B PRBS-sync       HD-FEC :%d\n", info->prbs_sync_hdfec_a );
+			if( (info->prbs_sync_pre_sdfec_b == 0) && (info->sdfec == SDFEC_ON) && (info->client_b == CLI_OTL4) ){
+				printf( " Ch.B PRBS-err   pre  SD-FEC :%lld\n", info->prbs_err_pre_sdfec_b );
+			}
+			if( info->prbs_sync_hdfec_a == 0 ){
+				if(info->client_b == CLI_OTL4){
+					printf( " Ch.B PRBS-err   pre  HD-FEC :%d\n", info->prbs_err_pre_hdfec_b );
+				}
+				printf(     " Ch.B PRBS-err   post HD-FEC :%d\n", info->prbs_err_post_hdfec_b );
+			}
+			printf(     " Ch.B Crt-err         HD-FEC :%d\n", info->correct_err_hdfec_b );
+		}
+	}
+	return;
+}
+
+
+/*!---------------------------------------------------------------------
+ *	\fn			void dsp_param_get_info( DSP_SDK_SET_PARAM* param )
+ *	\brief		Output DSP parameter information
+ *	\param[in]	param	Pointer to DSP parameter information
+ *	\return		None
+ */
+void dsp_param_get_info( DSP_SDK_SET_PARAM* param )
+{
+	U8 prm;
+
+	printf(     "// ------------------------------------------------------\n" );
+	printf(     "// Line side parameters\n" );
+	prm = param->ModType;
+	if( prm == MOD_TYPE_QPSK ){
+		printf( "// Mod-Type = %d     :: QPSK(100G)\n", prm );
+	}else if( prm ==  MOD_TYPE_16QAM ){
+		printf( "// Mod-Type = %d     :: 16QAM(200G)\n", prm );
+	}else if( prm == MOD_TYPE_QPSK_G1 ){
+		printf( "// Mod-Type = %d     :: QPSK(100G:Green/Gen1 interoperability)\n", prm );
+	}else if( prm == MOD_TYPE_QPSK_OC ){
+		printf( "// Mod-Type = %d     :: QPSK(100G:General interoperability)\n", prm );
+	}
+	prm = param->SdFec;
+	if( prm == SDFEC_OFF ){
+		printf( "// SD-FEC = %d       :: SD-FEC OFF\n", prm );
+	}else if( prm == SDFEC_ON ){
+		printf( "// SD-FEC = %d       :: SD-FEC ON\n", prm );
+	}
+	prm = param->DiffCode;
+	if( prm == DIFF_DEC_OFF ){
+		printf( "// Diff-Code = %d    :: Non-Diff\n", prm );
+	}else if( prm == DIFF_DEC_ON ){
+		printf( "// Diff-Code = %d    :: Diff\n", prm );
+	}
+	prm = param->LineMld;
+	if( prm == LINE_MLD_4 ){
+		printf( "// Line-MLD = %d     :: 4lane\n", prm );
+	}else if( prm == LINE_MLD_20 ){
+		printf( "// Line-MLD = %d     :: 20lane\n", prm );
+	}
+	prm = param->Sampling;
+	if( prm == SAMPL_DBL ){
+		printf( "// Sampling = %d     :: Double Sample\n", prm );
+	}else if( prm == SAMPL_FRAC ){
+		printf( "// Sampling = %d     :: Fractional Sample\n", prm );
+	}
+	prm = param->Nyquist;
+	if( prm == NYQUIST_OFF ){
+		printf( "// Nyquist = %d      :: Nyquist-OFF\n", prm );
+	}else if( prm == NYQUIST_ON ){
+		printf( "// Nyquist = %d      :: Nyquist-ON\n", prm );
+	}
+	prm = param->Distance;
+	if( prm == DIST_KIND_100KM ){
+		printf( "// Distance = %d     ::  100km\n", prm );
+	}else if( prm == DIST_KIND_600KM ){
+		printf( "// Distance = %d     ::  600km\n", prm );
+	}else if( prm == DIST_KIND_1200KM ){
+		printf( "// Distance = %d     :: 1200km\n", prm );
+	}else if( prm == DIST_KIND_2700KM ){
+		printf( "// Distance = %d     :: 2700km\n", prm );
+	}else if( prm == DIST_KIND_4000KM ){
+		printf( "// Distance = %d     :: 4000km\n", prm );
+	}
+	printf(     "// ------------------------------------------------------\n" );
+	printf(     "// Client side parameters\n" );
+	/* Client param */
+	prm = param->C2Mapping;
+	if( prm == C2MAP_OFF ){
+		printf( "// C2Mapping= %d     :: C2MAP-OFF\n", prm );
+	}else if( prm == C2MAP_ON ){
+		printf( "// C2Mapping = %d    :: C2MAP-ON\n", prm );
+	}
+	prm = param->Client_A;
+	if( prm == CLI_OTL4 ){
+		printf( "// Client_A = %d     :: OTL4\n", prm );
+	}else if( prm == C2MAP_ON ){
+		printf( "// Client_A = %d     :: 100GbE\n", prm );
+	}
+	prm = param->Framer_A;
+	if( prm == FRAMER_OFF){
+		printf( "// Framer_A = %d     :: FRAMER_OFF\n", prm );
+	}else if( prm == FRAMER_ON ){
+		printf( "// Framer_A = %d     :: FRAMER_ON\n", prm );
+	}
+	prm = param->FrmTxiGfec_A;
+	if( prm == TXI_GFEC_OFF){
+		printf( "// Framer_A = %d     :: TXI_GFEC_OFF\n", prm );
+	}else if( prm == TXI_GFEC_ON ){
+		printf( "// Framer_A = %d     :: TXI_GFEC_ON\n", prm );
+	}
+	prm = param->FrmTxiOhe_A;
+	if( prm == TXI_OHEXT_OFF){
+		printf( "// FrmTxiOhe_A = %d  :: TXI_OHEXT_OFF\n", prm );
+	}else if( prm == TXI_OHEXT_ON ){
+		printf( "// FrmTxiOhe_A = %d  :: TXI_OHEXT_ON\n", prm );
+	}
+	prm = param->FrmTxoOhi_A;
+	if( prm == TXO_OHINS_OFF){
+		printf( "// FrmTxoOhi_A = %d  :: TXO_EXT_OFF\n", prm );
+	}else if( prm == TXO_OHINS_ON ){
+		printf( "// FrmTxoOhi_A = %d  :: TXO_EXT_ON\n", prm );
+	}
+	prm = param->FrmFec_A;
+	if( prm == FRM_FEC_GFEC){
+		printf( "// FrmFec_A = %d     :: FRM_FEC_GFEC\n", prm );
+	}else if( prm == FRM_FEC_HGFEC ){
+		printf( "// FrmFec_A = %d     :: FRM_FEC_HGFEC\n", prm );
+	}
+	prm = param->FrmRxiOhe_A;
+	if( prm == RXI_OHEXT_OFF){
+		printf( "// FrmRxiOhe_A = %d  :: RXI_OHEXT_OFF\n", prm );
+	}else if( prm == RXI_OHEXT_ON ){
+		printf( "// FrmRxiOhe_A = %d  :: RXI_OHEXT_ON\n", prm );
+	}
+	prm = param->FrmRxoOhi_A;
+	if( prm == RXO_OHINS_OFF){
+		printf( "// FrmRxoOhi_A = %d  :: RXO_OHINS_OFF\n", prm );
+	}else if( prm == RXO_OHINS_OFF ){
+		printf( "// FrmRxoOhi_A = %d  :: RXO_OHINS_ON\n", prm );
+	}
+	prm = param->FrmRxoGfec_A;
+	if( prm == RXO_GFEC_OFF){
+		printf( "// FrmRxoGfec_A = %d :: RXO_GFEC_OFF\n", prm );
+	}else if( prm == RXO_GFEC_ON ){
+		printf( "// FrmRxoGfec_A = %d :: RXO_GFEC_ON\n", prm );
+	}
+	prm = param->Client_B;
+	if( prm == CLI_OTL4 ){
+		printf( "// Client_B = %d     :: OTL4\n", prm );
+	}else if( prm == C2MAP_ON ){
+		printf( "// Client_B = %d     :: 100GbE\n", prm );
+	}
+	prm = param->Framer_B;
+	if( prm == FRAMER_OFF){
+		printf( "// Framer_B = %d     :: FRAMER_OFF\n", prm );
+	}else if( prm == FRAMER_ON ){
+		printf( "// Framer_B = %d     :: FRAMER_ON\n", prm );
+	}
+	prm = param->FrmTxiGfec_B;
+	if( prm == TXI_GFEC_OFF){
+		printf( "// Framer_B = %d     :: TXI_GFEC_OFF\n", prm );
+	}else if( prm == TXI_GFEC_ON ){
+		printf( "// Framer_B = %d     :: TXI_GFEC_ON\n", prm );
+	}
+	prm = param->FrmTxiOhe_B;
+	if( prm == TXI_OHEXT_OFF){
+		printf( "// FrmTxiOhe_B = %d  :: TXI_OHEXT_OFF\n", prm );
+	}else if( prm == TXI_OHEXT_ON ){
+		printf( "// FrmTxiOhe_B = %d  :: TXI_OHEXT_ON\n", prm );
+	}
+	prm = param->FrmTxoOhi_B;
+	if( prm == TXO_OHINS_OFF){
+		printf( "// FrmTxoOhi_B = %d  :: TXO_EXT_OFF\n", prm );
+	}else if( prm == TXO_OHINS_ON ){
+		printf( "// FrmTxoOhi_B = %d  :: TXO_EXT_ON\n", prm );
+	}
+	prm = param->FrmFec_B;
+	if( prm == FRM_FEC_GFEC){
+		printf( "// FrmFec_B = %d     :: FRM_FEC_GFEC\n", prm );
+	}else if( prm == FRM_FEC_HGFEC ){
+		printf( "// FrmFec_B = %d     :: FRM_FEC_HGFEC\n", prm );
+	}
+	prm = param->FrmRxiOhe_B;
+	if( prm == RXI_OHEXT_OFF){
+		printf( "// FrmRxiOhe_B = %d  :: RXI_OHEXT_OFF\n", prm );
+	}else if( prm == RXI_OHEXT_ON ){
+		printf( "// FrmRxiOhe_B = %d  :: RXI_OHEXT_ON\n", prm );
+	}
+	prm = param->FrmRxoOhi_B;
+	if( prm == RXO_OHINS_OFF){
+		printf( "// FrmRxoOhi_B = %d  :: RXO_OHINS_OFF\n", prm );
+	}else if( prm == RXO_OHINS_OFF ){
+		printf( "// FrmRxoOhi_B = %d  :: RXO_OHINS_ON\n", prm );
+	}
+	prm = param->FrmRxoGfec_B;
+	if( prm == RXO_GFEC_OFF){
+		printf( "// FrmRxoGfec_B = %d :: RXO_GFEC_OFF\n", prm );
+	}else if( prm == RXO_GFEC_ON ){
+		printf( "// FrmRxoGfec_B = %d :: RXO_GFEC_ON\n", prm );
+	}
+	/* C2 mapping param */
+	prm = param->C2TxOhi_A;
+	if( prm == C2TX_OHINS_OFF){
+		printf( "// C2TxOhi_A = %d    :: C2TX_OHINS_OFF\n", prm );
+	}else if( prm == C2TX_OHINS_ON ){
+		printf( "// C2TxOhi_A = %d    :: C2TX_OHINS_ON\n", prm );
+	}
+	prm = param->C2RxOhe_A;
+	if( prm == C2RX_OHEXT_OFF){
+		printf( "// C2RxOhe_A = %d    :: C2RX_OHEXT_OFF\n", prm );
+	}else if( prm == C2RX_OHEXT_ON ){
+		printf( "// C2RxOhe_A = %d    :: C2RX_OHEXT_ON\n", prm );
+	}
+	prm = param->C2TxOhi_B;
+	if( prm == C2TX_OHINS_OFF){
+		printf( "// C2TxOhi_B = %d    :: C2TX_OHINS_OFF\n", prm );
+	}else if( prm == C2TX_OHINS_ON ){
+		printf( "// C2TxOhi_B = %d    :: C2TX_OHINS_ON\n", prm );
+	}
+	prm = param->C2RxOhe_B;
+	if( prm == C2RX_OHEXT_OFF){
+		printf( "// C2RxOhe_B = %d    :: C2RX_OHEXT_OFF\n", prm );
+	}else if( prm == C2RX_OHEXT_ON ){
+		printf( "// C2RxOhe_B = %d    :: C2RX_OHEXT_ON\n", prm );
+	}
+	prm = param->AvsCtrl;
+	if( prm == AVS_CTRL_ON ){
+		printf( "// AVS_ctrl  = %d    :: ON\n", prm );
+	}else if( prm == AVS_CTRL_OFF ){
+		printf( "// AVS_ctrl  = %d    :: OFF\n", prm );
+	}
+	prm = param->VcsoMod;
+	if( prm == VCSO_2GHZ ){
+		printf( "// Vcso_mod  = %d    :: 2GHz\n", prm );
+	}else if( prm == VCSO_1GHZ ){
+		printf( "// Vcso_mod  = %d    :: 1GHz\n", prm );
+	}
+	prm = param->EvbType;
+	if( prm == 1 ){
+		printf( "// EvbType   = %d    :: EvaBoard-1\n", prm );
+	}else if( prm == 2 ){
+		printf( "// EvbType   = %d    :: RefBoard-2\n", prm );
+	}
+	printf(     "// ------------------------------------------------------\n" );
+
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			void ver_get_info( void* context )
+ *	\brief		Output DSP_SDK and DSP_FW version
+ *	\param[in]	context		Pointer to context memory
+ *	\return		None
+ */
+void ver_get_info( void* context )
+{
+	char buf[128];
+	U32 data;
+
+	printf( "ver_get.\n" );
+	dsp_sdk_ver_get( buf );
+	dsp_dsp_reg_read( context, 0x00002300, &data );
+	data &= 0x0000FFFF;
+	printf("DSP_SDK Version  : %s\n", buf);
+	printf("DSP_FW  Version  : %04x\n", data);
+
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			void reg_read_info( void* context, U32 addr )
+ *	\brief		Read and output register value
+ *	\param[in]	context		Pointer to context memory
+ *	\param[in]	addr		Register read address
+ *	\return		None
+ */
+void reg_read_info( void* context, U32 addr )
+{
+	S16 ret;
+	U32 data;
+
+	printf( "reg_read. " );
+#if (HWLIB_NEL_SAMPLE==NEL_EVB) || (HWLIB_NEL_SAMPLE==EVB_1)
+	if( (addr & 0xFFFF0000) != 0 ){
+		ret = udsp_fpga_reg_read( context, addr, &data );
+	}else{
+#endif
+		ret = dsp_dsp_reg_read( context, addr, &data );
+#if (HWLIB_NEL_SAMPLE==NEL_EVB) || (HWLIB_NEL_SAMPLE==EVB_1)
+	}
+#endif
+	if( ret == 0 ){
+		printf( "%08x = %08X\n", addr, data );
+	}else{
+		printf( "%08X Read Err\n", addr );
+	}
+}
+/*!---------------------------------------------------------------------
+ *	\fn			void reg_write_info( void* context, U32 addr, U32 data )
+ *	\brief		Write value to the register
+ *	\param[in]	context		Pointer to context memory
+ *	\param[in]	addr		Register write address
+ *	\param[in]	data		Register write data
+ *	\return		None
+ */
+void reg_write_info( void* context, U32 addr, U32 data )
+{
+	S16 ret;
+
+	printf( "reg_write. " );
+#if (HWLIB_NEL_SAMPLE==NEL_EVB) || (HWLIB_NEL_SAMPLE==EVB_1)
+	if( (addr & 0xFFFF0000) != 0 ){
+		ret = udsp_fpga_reg_write( context, addr, data );
+	}else{
+#endif
+		ret = dsp_dsp_reg_write( context, addr, data );
+#if (HWLIB_NEL_SAMPLE==NEL_EVB) || (HWLIB_NEL_SAMPLE==EVB_1)
+	}
+#endif
+	if( ret == 0 ){
+		printf( "%08x = %08X OK\n", addr, data );
+	}else{
+		printf( "%08X = %08X Write Err\n", addr, data );
+	}
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			void dsp_tj_mon_info( STR_TJ_MON_DATA* tj_mon )
+ *	\brief		Output TJ monitor information
+ *	\param[in]	tj_mon		Pointer to TJ monitor information
+ *	\return		None
+ */
+void dsp_tj_mon_info( STR_TJ_MON_DATA* tj_mon )
+{
+	if( tj_mon != NULL ){
+		printf( " Central Temperature    : %d [C]\n" , tj_mon->central_temp );
+		printf( " Central Voltage        : %d [mV]\n", tj_mon->central_volt );
+		printf( " Client Temperature     : %d [C]\n" , tj_mon->client_temp );
+		printf( " Line Temperature       : %d [C]\n" , tj_mon->line_temp );
+	}
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			void dsp_avs_mon_info( STR_AVS_MON_DATA* avs_mon )
+ *	\brief		Output AVS monitor information
+ *	\param[in]	avs_mon		Pointer to AVS monitor information
+ *	\return		None
+ */
+void dsp_avs_mon_info( STR_AVS_MON_DATA* avs_mon )
+{
+	if( avs_mon != NULL ){
+		printf( " Central Temperature    : %d [C]\n" , avs_mon->central_temp );
+		printf( " Central Voltage        : %d [mV]\n", avs_mon->central_volt );
+		printf( " Client Temperature     : %d [C]\n" , avs_mon->client_temp );
+		printf( " Line Temperature       : %d [C]\n" , avs_mon->line_temp );
+		printf( " Regulator Voltage      : %d [mV]\n", avs_mon->reg_volt );
+		printf( " Regulator Current      : %d [A]\n" , avs_mon->reg_curr );
+		printf( " Regulator Temperature  : %d [C]\n" , avs_mon->reg_temp );
+	}
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			S16 hdfec_mon( void* context, CLIENT_CH ch, STR_HDFEC_BER_DATA* data )
+ *	\brief		Monitor HDFEC information
+ *	\param[in]	context		Pointer to context memory
+ *	\param[in]	ch			Client channel
+ *	\param[in]	data		Pointer to HDFEC BER monitor information
+ *	\retval		0			OK
+ */
+S16 hdfec_mon( void* context, CLIENT_CH ch, STR_HDFEC_BER_DATA* data )
+{
+	if( data != 0 ){
+		hdfec_info( ch, data );
+	}
+	return 0;
+}
+/*!---------------------------------------------------------------------
+ *	\fn			void hdfec_info( CLIENT_CH ch, STR_HDFEC_BER_DATA* hdfec_ber )
+ *	\brief		Output HDFEC monitor information
+ *	\param[in]	ch			Client channel
+ *	\param[in]	hdfec_ber	Pointer to HDFEC BER monitor information
+ *	\return		None
+ */
+void hdfec_info( CLIENT_CH ch, STR_HDFEC_BER_DATA* hdfec_ber )
+{
+	if( hdfec_ber != NULL ){
+			printf( " Time             : %lld [msec]\n", hdfec_ber->time );
+		if( ch & CH_A ){
+			printf( " Ch.A fec_err     : %d \n", hdfec_ber->fec_err_a );
+			printf( " Ch.A unc_blk_cnt : %lld \n", hdfec_ber->unc_blk_count_a );
+			printf( " Ch.A cor_blk_cnt : %lld \n", hdfec_ber->cor_blk_count_a );
+			printf( " Ch.A cor_bit_cnt : %lld \n", hdfec_ber->cor_bit_count_a );
+			printf( " Ch.A cor_bit_ber : %e \n", hdfec_ber->cor_bit_ber_a );
+		}
+		if( ch & CH_B ){
+			printf( " Ch.B fec_err     : %d \n", hdfec_ber->fec_err_b );
+			printf( " Ch.B unc_blk_cnt : %lld \n", hdfec_ber->unc_blk_count_b );
+			printf( " Ch.B cor_blk_cnt : %lld \n", hdfec_ber->cor_blk_count_b );
+			printf( " Ch.B cor_bit_cnt : %lld \n", hdfec_ber->cor_bit_count_b );
+			printf( " Ch.B cor_bit_ber : %e \n", hdfec_ber->cor_bit_ber_b );
+		}
+	}
+}
+/*!---------------------------------------------------------------------
+ *	\fn			S16 cl_gfec_mon( void* context, CLIENT_CH ch, STR_GFEC_BER_DATA* data )
+ *	\brief		Monitor Client GFEC information
+ *	\param[in]	context		Pointer to context memory
+ *	\param[in]	ch			Client channel
+ *	\param[in]	data		Pointer to GFEC BER monitor information
+ *	\retval		0			OK
+ */
+S16 cl_gfec_mon( void* context, CLIENT_CH ch, STR_GFEC_BER_DATA* data )
+{
+	if( data != 0 ){
+		cl_gfec_info( ch, data );
+	}
+	return 0;
+}
+/*!---------------------------------------------------------------------
+ *	\fn			void cl_gfec_info( CLIENT_CH ch, STR_GFEC_BER_DATA* gfec_ber )
+ *	\brief		Output Client GFEC monitor information
+ *	\param[in]	ch			Client channel
+ *	\param[in]	gfec_ber	Pointer to GFEC BER monitor information
+ *	\return		None
+ */
+void cl_gfec_info( CLIENT_CH ch, STR_GFEC_BER_DATA* gfec_ber )
+{
+	if( gfec_ber != NULL ){
+			printf( " Time             : %lld [msec]\n", gfec_ber->time );
+			printf( " Error            : %d\n", gfec_ber->err_detect );
+		if( ch & CH_A ){
+			printf( " Ch.A fec_err     : %d \n", gfec_ber->fec_err_a );
+			printf( " Ch.A unc_blk_cnt : %lld \n", gfec_ber->unc_blk_count_a );
+			printf( " Ch.A cor_blk_cnt : %lld \n", gfec_ber->cor_blk_count_a );
+			printf( " Ch.A cor_bit_cnt : %lld \n", gfec_ber->cor_bit_count_a );
+			printf( " Ch.A cor_bit_ber : %e \n", gfec_ber->cor_bit_ber_a );
+		}
+		if( ch & CH_B ){
+			printf( " Ch.B fec_err     : %d \n", gfec_ber->fec_err_b );
+			printf( " Ch.B unc_blk_cnt : %lld \n", gfec_ber->unc_blk_count_b );
+			printf( " Ch.B cor_blk_cnt : %lld \n", gfec_ber->cor_blk_count_b );
+			printf( " Ch.B cor_bit_cnt : %lld \n", gfec_ber->cor_bit_count_b );
+			printf( " Ch.B cor_bit_ber : %e \n", gfec_ber->cor_bit_ber_b );
+		}
+	}
+}
+/*!---------------------------------------------------------------------
+ *	\fn			S16 ldpc_mon( void* context, CLIENT_CH ch, STR_LDPC_BER_DATA* data )
+ *	\brief		Monitor LDPC information
+ *	\param[in]	context		Pointer to context memory
+ *	\param[in]	ch			Client channel
+ *	\param[in]	data		Pointer to LDPC BER monitor information
+ *	\retval		0			OK
+ */
+S16 ldpc_mon( void* context, CLIENT_CH ch, STR_LDPC_BER_DATA* data )
+{
+	if( data != 0 ){
+		ldpc_info( ch, data );
+	}
+	return 0;
+}
+/*!---------------------------------------------------------------------
+ *	\fn			void ldpc_info( CLIENT_CH ch, STR_LDPC_BER_DATA* ldpc_ber )
+ *	\brief		Output LDPC monitor information
+ *	\param[in]	ch			Client channel
+ *	\param[in]	ldpc_ber	Pointer to LDPC BER monitor information
+ *	\return		None
+ */
+void ldpc_info( CLIENT_CH ch, STR_LDPC_BER_DATA* ldpc_ber )
+{
+	if( ldpc_ber != NULL ){
+			printf( " Time             : %lld [msec]\n", ldpc_ber->time );
+			printf( " Error            : %d\n",    ldpc_ber->err_detect );
+		if( ch & CH_A ){
+			printf( " Ch.A err_count   : %lld \n", ldpc_ber->err_count_a   );
+			printf( " Ch.A uncr_count  : %lld \n", ldpc_ber->uncr_count_a  );
+			printf( " Ch.A cor_bit_ber : %e \n",   ldpc_ber->cor_bit_ber_a );
+		}
+		if( ch & CH_B ){
+			printf( " Ch.B err_count   : %lld \n", ldpc_ber->err_count_b   );
+			printf( " Ch.B uncr_count  : %lld \n", ldpc_ber->uncr_count_b  );
+			printf( " Ch.B cor_bit_ber : %e \n",   ldpc_ber->cor_bit_ber_b );
+		}
+	}
+}
+/*!---------------------------------------------------------------------
+ *	\fn			S16 ldpc_prbs_mon( void* context, CLIENT_CH ch, STR_LDPC_PRBS_BER_DATA* data )
+ *	\brief		Monitor LDPC PRBS information
+ *	\param[in]	context		Pointer to context memory
+ *	\param[in]	ch			Client channel
+ *	\param[in]	data		Pointer to LDPC PRBS BER monitor information
+ *	\retval		0			OK
+ */
+S16 ldpc_prbs_mon( void* context, CLIENT_CH ch, STR_LDPC_PRBS_BER_DATA* data )
+{
+	if( data != 0 ){
+		ldpc_prbs_info( ch, data );
+	}
+	return 0;
+}
+/*!---------------------------------------------------------------------
+ *	\fn			void ldpc_prbs_info( CLIENT_CH ch, STR_LDPC_PRBS_BER_DATA* ldpc_prbs_ber )
+ *	\brief		Output LDPC PRBS monitor information
+ *	\param[in]	ch				Client channel
+ *	\param[in]	ldpc_prbs_ber	Pointer to LDPC PRBS BER monitor information
+ *	\return		None
+ */
+void ldpc_prbs_info( CLIENT_CH ch, STR_LDPC_PRBS_BER_DATA* ldpc_prbs_ber )
+{
+	if( ldpc_prbs_ber != NULL ){
+			printf( " Time              : %lld [msec]\n", ldpc_prbs_ber->time );
+			printf( " Error             : %d\n",    ldpc_prbs_ber->err_detect );
+		if( ch & CH_A ){
+			printf( " Ch.A pn_sync_err  : %d\n",    ldpc_prbs_ber->prbs_sync_err_a  );
+			printf( " Ch.A pn_count_err : %d\n",    ldpc_prbs_ber->prbs_cnt_err_a   );
+			printf( " Ch.A err_count    : %lld \n", ldpc_prbs_ber->prbs_err_count_a );
+			printf( " Ch.A post_count   : %lld \n", ldpc_prbs_ber->post_count_a     );
+			printf( " Ch.A cor_count    : %lld \n", ldpc_prbs_ber->cor_count_a      );
+			printf( " Ch.A prbs_err_ber : %e \n",   ldpc_prbs_ber->prbs_err_ber_a   );
+			printf( " Ch.A post_err_ber : %e \n",   ldpc_prbs_ber->post_err_ber_a   );
+			printf( " Ch.A cor_err_ber  : %e \n",   ldpc_prbs_ber->cor_err_ber_a    );
+		}
+		if( ch & CH_B ){
+			printf( " Ch.B pn_sync_err  : %d\n",    ldpc_prbs_ber->prbs_sync_err_b  );
+			printf( " Ch.B pn_count_err : %d\n",    ldpc_prbs_ber->prbs_cnt_err_b   );
+			printf( " Ch.B err_count    : %lld \n", ldpc_prbs_ber->prbs_err_count_b );
+			printf( " Ch.B post_count   : %lld \n", ldpc_prbs_ber->post_count_b     );
+			printf( " Ch.B cor_count    : %lld \n", ldpc_prbs_ber->cor_count_b      );
+			printf( " Ch.B prbs_err_ber : %e \n",   ldpc_prbs_ber->prbs_err_ber_b   );
+			printf( " Ch.B post_err_ber : %e \n",   ldpc_prbs_ber->post_err_ber_b   );
+			printf( " Ch.B cor_err_ber  : %e \n",   ldpc_prbs_ber->cor_err_ber_b    );
+		}
+	}
+}
+/*!---------------------------------------------------------------------
+ *	\fn			S16 bjfec_mon( void* context, CLIENT_CH ch, STR_CL_BJFEC_DATA* data )
+ *	\brief		Monitor BJFEC information
+ *	\param[in]	context	Pointer to context memory
+ *	\param[in]	ch		Client channel
+ *	\param[in]	data	Pointer to BJFEC monitor information
+ *	\retval		0		OK
+ */
+S16 bjfec_mon( void* context, CLIENT_CH ch, STR_CL_BJFEC_DATA* data )
+{
+	if( data != 0 ){
+		bjfec_info( ch, data );
+	}
+	return 0;
+}
+/*!---------------------------------------------------------------------
+ *	\fn			void bjfec_info( CLIENT_CH ch, STR_CL_BJFEC_DATA* bjfec_ber )
+ *	\brief		Output BJFEC monitor information
+ *	\param[in]	ch			Client channel
+ *	\param[in]	bjfec_ber	Pointer to BJFEC BER monitor information
+ *	\return		None
+ */
+void bjfec_info( CLIENT_CH ch, STR_CL_BJFEC_DATA* bjfec_ber )
+{
+	if( bjfec_ber != NULL ){
+			printf( " Time                  : %lld [msec]\n", bjfec_ber->time );
+		if( ch & CH_A ){
+			printf( " Error                 : %d\n", bjfec_ber->detected_a);
+			printf( " Ch.A PCS-Lane-Lock    : %d\n", bjfec_ber->pcs_lane_lock_a );
+			printf( " Ch.A FEC-Lane-Lock    : %d\n", bjfec_ber->fec_lane_lock_a );
+			printf( " Ch.A Codeword cor     : %d\n", bjfec_ber->codeword_correction_a);
+			printf( " Ch.A Codeword not cor : %d\n", bjfec_ber->codeword_not_correction_a);
+			printf( " Ch.A High-ber         : %d\n", bjfec_ber->high_ser_a);
+			printf( " Ch.A Lane0 err count  : %d\n", bjfec_ber->symbol_error_count_lane0_a );
+			printf( " Ch.A Lane1 err count  : %d\n", bjfec_ber->symbol_error_count_lane1_a );
+			printf( " Ch.A Lane2 err count  : %d\n", bjfec_ber->symbol_error_count_lane2_a );
+			printf( " Ch.A Lane3 err count  : %d\n", bjfec_ber->symbol_error_count_lane3_a );
+			printf( " Ch.A Lane0 err BER    : %e\n", bjfec_ber->ber_lane0_a );
+			printf( " Ch.A Lane1 err BER    : %e\n", bjfec_ber->ber_lane1_a );
+			printf( " Ch.A Lane2 err BER    : %e\n", bjfec_ber->ber_lane2_a );
+			printf( " Ch.A Lane3 err BER    : %e\n", bjfec_ber->ber_lane3_a );
+		}
+		if( ch & CH_B ){
+			printf(" Error                 : %d\n", bjfec_ber->detected_b);
+			printf(" Ch.B PCS-Lane-Lock    : %d\n", bjfec_ber->pcs_lane_lock_b);
+			printf(" Ch.B FEC-Lane-Lock    : %d\n", bjfec_ber->fec_lane_lock_b);
+			printf(" Ch.B Codeword cor     : %d\n", bjfec_ber->codeword_correction_b);
+			printf(" Ch.B Codeword not cor : %d\n", bjfec_ber->codeword_not_correction_b);
+			printf(" Ch.B High-ber         : %d\n", bjfec_ber->high_ser_b);
+			printf(" Ch.B Lane0 err count  : %d\n", bjfec_ber->symbol_error_count_lane0_b);
+			printf(" Ch.B Lane1 err count  : %d\n", bjfec_ber->symbol_error_count_lane1_b);
+			printf(" Ch.B Lane2 err count  : %d\n", bjfec_ber->symbol_error_count_lane2_b);
+			printf(" Ch.B Lane3 err count  : %d\n", bjfec_ber->symbol_error_count_lane3_b);
+			printf(" Ch.B Lane0 err BER    : %e\n", bjfec_ber->ber_lane0_b);
+			printf(" Ch.B Lane1 err BER    : %e\n", bjfec_ber->ber_lane1_b);
+			printf(" Ch.B Lane2 err BER    : %e\n", bjfec_ber->ber_lane2_b);
+			printf(" Ch.B Lane3 err BER    : %e\n", bjfec_ber->ber_lane3_b);
+		}
+	}
+}
+
+
+
+/*!---------------------------------------------------------------------
+ *	\fn			S16 cgbe_alm_mon( void* context, CLIENT_CH ch, DIRECTION dira, DIRECTION dirb, STR_CL_CGBE_ALM_DATA* atx, STR_CL_CGBE_ALM_DATA* arx, STR_CL_CGBE_ALM_DATA* btx, STR_CL_CGBE_ALM_DATA* brx )
+ *	\brief		Monitor Client-100GbE alarm information
+ *	\param[in]	context		Pointer to context memory
+ *	\param[in]	ch			Client channel
+ *	\param[in]	dira		Direction ch.A
+ *	\param[in]	dirb		Direction ch.B
+ *	\param[in]	atx			Pointer to Client-100GbE alarm data ( Ch.A-TX )
+ *	\param[in]	arx			Pointer to Client-100GbE alarm data ( Ch.A-RX )
+ *	\param[in]	btx			Pointer to Client-100GbE alarm data ( Ch.B-TX )
+ *	\param[in]	brx			Pointer to Client-100GbE alarm data ( Ch.B-RX )
+ *	\retval		0			OK
+ */
+S16 cgbe_alm_mon( void* context, CLIENT_CH ch, DIRECTION dira, DIRECTION dirb, STR_CL_CGBE_ALM_DATA* atx, STR_CL_CGBE_ALM_DATA* arx, STR_CL_CGBE_ALM_DATA* btx, STR_CL_CGBE_ALM_DATA* brx )
+{
+	cgbe_alm_info( CH_A, DIR_TX, atx );
+	cgbe_alm_info( CH_A, DIR_RX, arx );
+	cgbe_alm_info( CH_B, DIR_TX, btx );
+	cgbe_alm_info( CH_B, DIR_RX, brx );
+	return 0;
+}
+/*!---------------------------------------------------------------------
+ *	\fn			void cgbe_alm_info( CLIENT_CH ch, DIRECTION dir, STR_CL_CGBE_ALM_DATA* data )
+ *	\brief		Output Client-100GbE alarm monitor information
+ *	\param[in]	ch			Client channel (Ch.A/Ch.B)
+ *	\param[in]	dir			Direction (TX/RX)
+ *	\param[in]	data		Pointer to Client-100GbE alarm data
+ *	\return		None
+ */
+void cgbe_alm_info( CLIENT_CH ch, DIRECTION dir, STR_CL_CGBE_ALM_DATA* data )
+{
+
+	if( ch == CH_A ){
+		if( dir == DIR_TX ){
+			printf( " Ch.A-Tx \n" );
+			printf( " Ch.A-Tx detected     : %d\n", data->detected );
+			printf( " Ch.A-Tx e66b_lof     : %d\n", data->e66b_lof );
+			printf( " Ch.A-Tx deskew_err   : %d\n", data->deskew_err );
+			printf( " Ch.A-Tx bip_err      : %d\n", data->bip_err );
+			printf( " Ch.A-Tx hi_ber       : %d\n", data->hi_ber );
+			printf( " Ch.A-Tx local_fault  : %d\n", data->local_fault );
+			printf( " Ch.A-Tx remote_fault : %d\n", data->remote_fault );
+		}
+		else if( dir == DIR_RX ){
+			printf( " Ch.A-Rx \n" );
+			printf( " Ch.A-Rx detected     : %d\n", data->detected );
+			printf( " Ch.A-Rx e66b_lof     : %d\n", data->e66b_lof );
+			printf( " Ch.A-Rx deskew_err   : %d\n", data->deskew_err );
+			printf( " Ch.A-Rx bip_err      : %d\n", data->bip_err );
+			printf( " Ch.A-Rx hi_ber       : %d\n", data->hi_ber );
+			printf( " Ch.A-Rx local_fault  : %d\n", data->local_fault );
+			printf( " Ch.A-Rx remote_fault : %d\n", data->remote_fault );
+		}
+	}
+	else if( ch == CH_B ){
+		if( dir == DIR_TX ){
+			printf( " Ch.B-Tx \n" );
+			printf( " Ch.B-Tx detected     : %d\n", data->detected );
+			printf( " Ch.B-Tx e66b_lof     : %d\n", data->e66b_lof );
+			printf( " Ch.B-Tx deskew_err   : %d\n", data->deskew_err );
+			printf( " Ch.B-Tx bip_err      : %d\n", data->bip_err );
+			printf( " Ch.B-Tx hi_ber       : %d\n", data->hi_ber );
+			printf( " Ch.B-Tx local_fault  : %d\n", data->local_fault );
+			printf( " Ch.B-Tx remote_fault : %d\n", data->remote_fault );
+		}
+		else if( dir == DIR_RX ){
+			printf( " Ch.B-Rx \n" );
+			printf( " Ch.B-Rx detected     : %d\n", data->detected );
+			printf( " Ch.B-Rx e66b_lof     : %d\n", data->e66b_lof );
+			printf( " Ch.B-Rx deskew_err   : %d\n", data->deskew_err );
+			printf( " Ch.B-Rx bip_err      : %d\n", data->bip_err );
+			printf( " Ch.B-Rx hi_ber       : %d\n", data->hi_ber );
+			printf( " Ch.B-Rx local_fault  : %d\n", data->local_fault );
+			printf( " Ch.B-Rx remote_fault : %d\n", data->remote_fault );
+		}
+	}
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			void pll_unlock_mon( void* context, DSP_PLL_UNLOCK_INFO* info )
+ *	\brief		Output PLL unlock monitor information
+ *	\param[in]	context		Pointer to context memory
+ *	\param[in]	info		Pointer to PLL unlock monitor information
+ *	\return		None
+ */
+void pll_unlock_mon( void* context, DSP_PLL_UNLOCK_INFO* info )
+{
+
+	if( info != NULL ){
+		printf( " data_val            : 0x%08x\n", info->data_val );
+		printf( " TXIA_PLL_UNLOCK     : %d\n", info->txia_pll_unlock );
+		printf( " TXIB_PLL_UNLOCK     : %d\n", info->txib_pll_unlock );
+		printf( " TXIC_PLL_UNLOCK     : %d\n", info->txic_pll_unlock );
+		printf( " RXOA_PLL_UNLOCK     : %d\n", info->rxoa_pll_unlock );
+		printf( " RXOB_PLL_UNLOCK     : %d\n", info->rxob_pll_unlock );
+		printf( " RXOC_PLL_UNLOCK     : %d\n", info->rxoc_pll_unlock );
+		printf( " TXO_PLL_UNLOCK      : %d\n", info->txo_pll_unlock  );
+		printf( " RXI_PLL_UNLOCK      : %d\n", info->rxi_pll_unlock  );
+		printf( " TXIA_CDR_UNLOCK     : %d\n", info->txia_cdr_unlock );
+		printf( " TXIB_CDR_UNLOCK     : %d\n", info->txib_cdr_unlock );
+		printf( " TXIC_CDR_UNLOCK     : %d\n", info->txic_cdr_unlock );
+	}
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			void oda_mon( STR_ODA_LC_DATA* oda_info )
+ *	\brief		Output ODA monitor information
+ *	\param[in]	oda_info		pointer to ODA monitor information
+ *	\return		None
+ */
+void oda_mon( STR_ODA_LC_DATA* oda_info )
+{
+
+	if( oda_info != NULL ){
+		printf( " ODA_MON_DATA\n" );
+		printf( " Serial Number		: 0x%08x\n", oda_info->sn );
+		printf( " Chip Version		: 0x%08x\n", oda_info->chip_ver );
+		printf( " Own Function\n" );
+		printf( "  Lc-Upgrade		: %d (0:disable / 1:enable)\n", oda_info->lic.m_lcupg );
+		printf( "  200G - 16QAM		: %d (0:disable / 1:enable)\n", oda_info->lic.m_200g );
+		printf( "  SD-FEC		: %d (0:disable / 1:enable)\n", oda_info->lic.m_sdfec );
+		if(oda_info->lic.m_cdopt == 0){
+			printf( "  CD range		: %d (0:small / 1:full)\n", oda_info->lic.m_cd);
+			printf( "  CD range restricted	: ----\n");
+		}else {
+			printf( "  CD range		: %d (0:small / 1:restricted)\n", oda_info->lic.m_cd);
+			printf( "  CD range restricted	: %d (ps/nm)\n", oda_info->lic.m_cdopt);
+		}
+		printf( " Unauthorized Function(After the trial period)\n" );
+		printf( "  200G - 16QAM		: %d (0:not detected / 1:alarm detected)\n", oda_info->alm1.m_200g );
+		printf( "  SD-FEC		: %d (0:not detected / 1:alarm detected)\n", oda_info->alm1.m_sdfec );
+		printf( "  CD range		: %d (0:not detected / 1:alarm detected)\n", oda_info->alm1.m_cd );
+		printf( " Unauthorized Function(Within the trial period)\n" );
+		printf( "  200G - 16QAM		: %d (0:not detected / 1:alarm detected)\n", oda_info->alm2.m_200g );
+		printf( "  SD-FEC		: %d (0:not detected / 1:alarm detected)\n", oda_info->alm2.m_sdfec );
+		printf( "  CD range		: %d (0:not detected / 1:alarm detected)\n", oda_info->alm2.m_cd );
+	}
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			void dsp_lnloop_info( DSP_LOOP_INFO* info )
+ *	\brief		Output	loopback information
+ *	\param[in]	info	Pointer to loopback information
+ *	\return		None
+ */
+void dsp_lnloop_info( DSP_LOOP_INFO* info )
+{
+	if( info == NULL ){
+		return;
+	}
+
+	if( ( info->loop_info ) == 0 )
+	{
+		printf( "  LN_LOOPBACK_OFF\n" );
+	}
+	else
+	{
+		printf( "  LN_LOOPBACK_ON\n" );
+		if ( ( info->loop_info & 0x01 ) == 0x01 ) {
+			printf( "    far-end-A\n" );
+		}
+		if ( ( info->loop_info & 0x02 ) == 0x02 ) {
+			printf( "    far-end-B\n" );
+		}
+		if ( ( info->loop_info & 0x04 ) == 0x04 ) {
+			printf( "    near-end\n" );
+		}
+	}
+
+	return;
+}
+
+/*!---------------------------------------------------------------------
+ *	\fn			void dsp_clloop_info( DSP_LOOP_INFO* info )
+ *	\brief		Output	loopback information
+ *	\param[in]	info	Pointer to loopback information
+ *	\return		None
+ */
+void dsp_clloop_info( DSP_LOOP_INFO* info )
+{
+	if( info == NULL ){
+		return;
+	}
+
+	if( ( info->loop_info ) == 0 )
+	{
+		printf( "  CL_LOOPBACK_OFF\n" );
+	}
+	else
+	{
+		printf( "  CL_LOOPBACK_ON\n" );
+		if ( ( info->loop_info & 0x01 ) == 0x01 ) {
+			printf( "    far-end\n" );
+		}
+		if ( ( info->loop_info & 0x02 ) == 0x02 ) {
+			printf( "    long-far-end\n" );
+		}
+		if ( ( info->loop_info & 0x04 ) == 0x04 ) {
+			printf( "    near-end-A\n" );
+		}
+		if ( ( info->loop_info & 0x08 ) == 0x08 ) {
+			printf( "    near-end-B\n" );
+		}
+	}
+
+	return;
+}
+/* End of File */
